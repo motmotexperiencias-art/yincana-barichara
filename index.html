@@ -3,41 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MOT MOT | Operación Barichara</title>
-
+    <title>MOT MOT | Barichara</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
-
     <style>
         :root { --naranja: #ff6600; --verde: #00cc66; --negro: #000; --gris: #0c0c0c; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100dvh; font-family: 'Verdana', sans-serif; overflow: hidden; }
-        
         .capa { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; z-index: 10; }
         .activa { display: flex !important; }
-        
         .video-bg { position: absolute; z-index: -1; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
-
-        /* Contenedor de Pista */
         .split { display: flex; width: 100%; height: 100%; flex-direction: column; }
-        .col-visual { flex: 1.2; position: relative; background: #000; overflow: hidden; }
-        .col-control { flex: 1; background: var(--gris); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; border-top: 2px solid #222; }
-        
+        .col-visual { flex: 1.3; position: relative; background: #000; }
+        .col-control { flex: 1; background: var(--gris); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; gap: 10px; border-top: 2px solid #222; }
         video, .mapa { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-        .btn-mot { background: transparent; border: 2px solid var(--naranja); color: var(--naranja); padding: 16px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; width: 90%; max-width: 300px; font-size: 14px; margin-top: 10px; }
-        .btn-mot:active { background: var(--naranja); color: #000; transform: scale(0.96); }
-
+        .btn-mot { background: transparent; border: 2px solid var(--naranja); color: var(--naranja); padding: 16px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; width: 90%; max-width: 300px; font-size: 14px; }
         input { background: rgba(255,255,255,0.08); border: none; border-bottom: 2px solid #444; color: white; padding: 15px; margin: 8px 0; width: 90%; text-align: center; font-size: 16px; outline: none; }
-
-        /* Timeline */
         .timeline { display: flex; flex-direction: column; gap: 15px; overflow-y: auto; width: 100%; padding: 100px 0; align-items: center; }
         .hito { display: flex; align-items: center; gap: 20px; width: 85%; max-width: 380px; padding: 18px; background: rgba(255,255,255,0.03); border-radius: 12px; opacity: 0.2; pointer-events: none; border: 1px solid transparent; }
-        .hito.actual { opacity: 1; pointer-events: auto; border-color: var(--naranja); box-shadow: 0 0 15px rgba(255,102,0,0.2); }
+        .hito.actual { opacity: 1; pointer-events: auto; border-color: var(--naranja); }
         .hito.completado { opacity: 0.6; pointer-events: auto; border-left: 5px solid var(--verde); }
         .bola { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #333; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
-        
         #scan-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         #reader { width: 80vw; height: 80vw; max-width: 350px; border: 2px solid var(--naranja); border-radius: 15px; overflow: hidden; }
     </style>
@@ -46,22 +33,19 @@
 
     <div id="capa-login" class="capa activa">
         <video class="video-bg" autoplay muted loop playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
-        <h2 style="letter-spacing:8px;">MOT MOT</h2>
-        <div style="width:100%; display:flex; flex-direction:column; align-items:center;">
-            <input type="text" id="reg-nombre" placeholder="TU NOMBRE">
-            <input type="text" id="reg-equipo" placeholder="NOMBRE DEL EQUIPO">
-            <input type="text" id="reg-clave" placeholder="CLAVE ASIGNADA">
-            <button class="btn-mot" style="border-color:var(--verde); color:var(--verde);" onclick="iniciarMision()">INICIAR OPERACIÓN</button>
-        </div>
+        <h2 style="letter-spacing:10px;">MOT MOT</h2>
+        <input type="text" id="reg-nombre" placeholder="TU NOMBRE">
+        <input type="text" id="reg-equipo" placeholder="EQUIPO">
+        <input type="text" id="reg-clave" placeholder="CLAVE">
+        <button class="btn-mot" style="border-color:var(--verde); color:var(--verde);" onclick="iniciarMision()">ENTRAR</button>
         <p id="aviso-login" style="margin-top:20px; font-size:12px; color:var(--naranja);"></p>
     </div>
 
-    <div id="capa-tablero" class="capa" style="background: var(--negro); justify-content: flex-start;">
-        <div style="width:100%; background:rgba(0,0,0,0.9); padding:20px; border-bottom:1px solid #222; margin-bottom: 20px;">
-            <span id="txt-saludo" style="color:var(--naranja); font-weight:bold; font-size:13px;"></span>
+    <div id="capa-tablero" class="capa" style="background: var(--negro);">
+        <div style="position:fixed; top:0; width:100%; background:rgba(0,0,0,0.95); padding:20px; border-bottom:1px solid #222; z-index:100;">
+            <span id="txt-saludo" style="color:var(--naranja); font-weight:bold;">ESTADO DE LA MISIÓN</span>
         </div>
         <div class="timeline" id="timeline-contenedor"></div>
-        <button onclick="cerrarSesion()" style="color:#444; font-size:10px; background:none; border:none; margin-top: auto; padding-bottom: 20px;">ABANDONAR MISIÓN</button>
     </div>
 
     <div id="capa-pista" class="capa" style="padding:0;">
@@ -71,64 +55,54 @@
                 <div id="pista-mapa" class="mapa" style="display:none;"></div>
             </div>
             <div class="col-control">
-                <h3 id="pista-titulo" style="color:var(--naranja); margin:0;"></h3>
-                <p id="pista-texto" style="font-size:14px; color:#aaa; margin: 10px 0;"></p>
+                <h3 id="pista-titulo" style="color:var(--naranja);"></h3>
+                <p id="pista-texto" style="font-size:14px; color:#aaa;"></p>
                 <div id="pista-gps-ui" style="display:none;">
                     <div id="pista-distancia" style="font-size:50px; font-weight:bold; color:var(--naranja);">--</div>
                     <p style="margin:0; font-size:11px; opacity: 0.6;">METROS</p>
                 </div>
-                <button id="btn-escanear-accion" class="btn-mot" onclick="abrirEscaner()">📸 ESCANEAR</button>
-                <button class="btn-mot" style="border-color:#333; color:#555; font-size:11px;" onclick="irATablero()">VOLVER AL TABLERO</button>
+                <button class="btn-mot" onclick="abrirEscaner()">📸 ESCANEAR QR</button>
+                <button class="btn-mot" style="border-color:#333; color:#555; font-size:11px;" onclick="irATablero()">TABLERO</button>
             </div>
         </div>
     </div>
 
     <div id="capa-victoria" class="capa">
-        <h1 style="color:var(--verde); font-size:45px; margin: 0;">¡ÉXITO!</h1>
-        <p id="msj-victoria" style="font-size:16px; margin: 20px 0;"></p>
-        <div id="tiempo-total" style="font-size:50px; color:var(--naranja); font-weight:bold;">--:--</div>
-        <button class="btn-mot" onclick="location.reload()" style="margin-top:40px; border-color:var(--verde); color:var(--verde);">NUEVA MISIÓN</button>
+        <h1 style="color:var(--verde); font-size:45px;">¡VICTORIA!</h1>
+        <p id="msj-victoria"></p>
+        <div id="tiempo-total" style="font-size:55px; color:var(--naranja); font-weight:bold;">--:--</div>
+        <button class="btn-mot" onclick="location.reload()" style="border-color:var(--verde); color:var(--verde);">NUEVA MISIÓN</button>
     </div>
 
     <div id="scan-overlay">
         <div id="reader"></div>
-        <button class="btn-mot" onclick="cerrarEscaner()" style="margin-top:30px; border-color:white; color:white;">CANCELAR</button>
+        <button class="btn-mot" onclick="cerrarEscaner()" style="border-color:#fff; color:#fff;">CANCELAR</button>
     </div>
 
     <script>
         const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec";
         
-        // ORDEN REAL DE PISTAS
         const PISTAS_DATA = {
-            1: { titulo: "LA BIENVENIDA", texto: "Busca la fuente antigua en el parque central.", qr: "BARICHARA_PISTA_01", video: "https://www.motmotexperiencias.com/wp-content/uploads/2025/12/Diseno-sin-titulo-3.mp4" },
-            2: { titulo: "FUNDACIÓN", texto: "Escuela Taller. Busca el portal de piedra.", qr: "BARICHARA_PISTA_02", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-15.mp4", lat: 6.634477, lon: -73.224308 },
-            3: { titulo: "TABACO & PAPEL", texto: "Taller de Papel. Hojas que cuentan historias.", qr: "PISTA_03", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", lat: 6.634307, lon: -73.225441 },
-            10: { titulo: "TESORO FINAL", texto: "Has llegado. Escanea el gran cofre.", qr: "TESORO_MOTMOT_FINAL", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-11.mp4" }
+            1: { titulo: "LA BIENVENIDA", texto: "Busca la fuente antigua.", qr: "BARICHARA_PISTA_01", video: "https://www.motmotexperiencias.com/wp-content/uploads/2025/12/Diseno-sin-titulo-3.mp4" },
+            2: { titulo: "FUNDACIÓN", texto: "Escuela Taller.", qr: "BARICHARA_PISTA_02", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-15.mp4", lat: 6.634477, lon: -73.224308 },
+            3: { titulo: "TABACO & PAPEL", texto: "Taller de Papel.", qr: "PISTA_03", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", lat: 6.634307, lon: -73.225441 },
+            10: { titulo: "TESORO FINAL", texto: "¡Has llegado al cofre!", qr: "TESORO_MOTMOT_FINAL", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-11.mp4" }
         };
 
-        const ORDEN_NIVELES = [1, 2, 3, 10]; // Definimos el camino exacto
+        const ORDEN = [1, 2, 3, 10]; // El camino maestro
 
         let nivelActual = 1;
         let qrScanner = null;
-        let map = null;
-        let watchID = null;
 
-        // PERSISTENCIA: Si refresca, vuelve a donde estaba
         window.onload = () => {
-            const guardado = localStorage.getItem('motmot_clave');
-            if(guardado) {
-                document.getElementById('aviso-login').innerText = "REANUDANDO...";
-                iniciarMision(true);
-            }
+            if(localStorage.getItem('motmot_clave')) iniciarMision(true);
         };
 
         function iniciarMision(esRecarga = false) {
             const nom = esRecarga ? localStorage.getItem('motmot_agente') : document.getElementById('reg-nombre').value.trim();
             const equ = esRecarga ? localStorage.getItem('motmot_equipo') : document.getElementById('reg-equipo').value.trim();
             const cla = esRecarga ? localStorage.getItem('motmot_clave') : document.getElementById('reg-clave').value.toUpperCase().trim();
-
             if(!nom || !cla) return;
-
             ejecutarJSONP(`${URL_GOOGLE}?action=registrar_inicio&codigo=${cla}&nombre=${encodeURIComponent(nom)}&equipo=${encodeURIComponent(equ)}`, (data) => {
                 if(data.status === "success") {
                     localStorage.setItem('motmot_clave', cla);
@@ -137,24 +111,19 @@
                     nivelActual = parseInt(data.pista_actual || 1);
                     localStorage.setItem('motmot_pista', nivelActual);
                     irATablero();
-                } else if(!esRecarga) {
-                    document.getElementById('aviso-login').innerText = data.mensaje;
                 }
             });
         }
 
         function irATablero() {
-            document.getElementById('txt-saludo').innerText = `AGENTE: ${localStorage.getItem('motmot_agente')}`;
             nivelActual = parseInt(localStorage.getItem('motmot_pista') || 1);
             const cont = document.getElementById('timeline-contenedor');
             cont.innerHTML = "";
-
-            ORDEN_NIVELES.forEach(i => {
+            ORDEN.forEach(i => {
                 const hito = document.createElement('div');
                 hito.className = `hito ${i < nivelActual ? 'completado' : (i === nivelActual ? 'actual' : '')}`;
                 hito.onclick = () => { if(i <= nivelActual) cargarPista(i); };
-                const t = PISTAS_DATA[i].titulo;
-                hito.innerHTML = `<div class="bola">${i === 10 ? '🏆' : i}</div><div style="text-align:left;"><b style="font-size:14px;">${t}</b></div>`;
+                hito.innerHTML = `<div class="bola">${i === 10 ? '🏆' : i}</div><div><b>${PISTAS_DATA[i].titulo}</b></div>`;
                 cont.appendChild(hito);
             });
             mostrarCapa('capa-tablero');
@@ -167,7 +136,6 @@
             document.getElementById('pista-video').src = data.video;
             document.getElementById('pista-video').style.display = "block";
             document.getElementById('pista-mapa').style.display = "none";
-            document.getElementById('pista-gps-ui').style.display = "none";
             if(data.lat) iniciarGPS(data.lat, data.lon);
             mostrarCapa('capa-pista');
         }
@@ -175,14 +143,14 @@
         function abrirEscaner() {
             document.getElementById('scan-overlay').style.display = 'flex';
             if(!qrScanner) qrScanner = new Html5Qrcode("reader");
-            qrScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 280 }, (text) => {
+            qrScanner.start({ facingMode: "environment" }, { fps: 20, qrbox: 280 }, (text) => {
                 if(text.trim() === PISTAS_DATA[nivelActual].qr) {
                     cerrarEscaner();
                     exitoPista();
                 } else {
-                    alert("CÓDIGO INCORRECTO");
+                    alert("QR INVÁLIDO");
                 }
-            }).catch(err => console.error(err));
+            }).catch(e => console.log(e));
         }
 
         function exitoPista() {
@@ -190,41 +158,19 @@
                 mostrarCapa('capa-victoria');
                 finalizarMision();
             } else {
-                // Buscamos el siguiente nivel en el array de ORDEN_NIVELES
-                const indexActual = ORDEN_NIVELES.indexOf(nivelActual);
-                const proximo = ORDEN_NIVELES[indexActual + 1];
-                
-                nivelActual = proximo;
+                let idx = ORDEN.indexOf(nivelActual);
+                nivelActual = ORDEN[idx + 1];
                 localStorage.setItem('motmot_pista', nivelActual);
-                
                 ejecutarJSONP(`${URL_GOOGLE}?action=guardar_progreso&codigo=${localStorage.getItem('motmot_clave')}&pista=${nivelActual}`, (res) => {
                     irATablero();
                 });
-                alert("¡PISTA COMPLETADA!");
             }
         }
 
         function finalizarMision() {
-            const equ = localStorage.getItem('motmot_equipo');
-            ejecutarJSONP(`${URL_GOOGLE}?action=registrar_fin&equipo=${encodeURIComponent(equ)}`, (data) => {
+            ejecutarJSONP(`${URL_GOOGLE}?action=registrar_fin&equipo=${encodeURIComponent(localStorage.getItem('motmot_equipo'))}`, (data) => {
                 document.getElementById('tiempo-total').innerText = `${data.tiempo} MIN`;
-                document.getElementById('msj-victoria').innerText = `FELICIDADES EQUIPO ${equ}`;
             });
-        }
-
-        function iniciarGPS(tLat, tLon) {
-            document.getElementById('pista-video').style.display = "none";
-            document.getElementById('pista-mapa').style.display = "block";
-            document.getElementById('pista-gps-ui').style.display = "block";
-            if(map) map.remove();
-            map = L.map('pista-mapa', {zoomControl: false}).setView([tLat, tLon], 18);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            L.marker([tLat, tLon]).addTo(map);
-            if(watchID) navigator.geolocation.clearWatch(watchID);
-            watchID = navigator.geolocation.watchPosition(pos => {
-                const d = calcularDistancia(pos.coords.latitude, pos.coords.longitude, tLat, tLon);
-                document.getElementById('pista-distancia').innerText = Math.round(d);
-            }, null, {enableHighAccuracy: true});
         }
 
         function mostrarCapa(id) {
@@ -238,12 +184,6 @@
             const script = document.createElement('script');
             script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cbName;
             document.body.appendChild(script);
-        }
-
-        function calcularDistancia(lat1, lon1, lat2, lon2) {
-            const R = 6371000;
-            const a = Math.sin((lat2-lat1)*Math.PI/360)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin((lon2-lon1)*Math.PI/360)**2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
         function cerrarEscaner() { 
