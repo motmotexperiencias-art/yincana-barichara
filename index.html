@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SISTEMA MOTMOT | Yincana Barichara</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <style>
+        /* --- ESTILOS MAESTROS MOT MOT --- */
+        :root { --naranja: #ff6600; --verde: #00cc66; --negro: #000; --gris: #080808; --azul: #0055ff; }
+        body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100vh; font-family: 'Verdana', sans-serif; overflow: hidden; }
+        .capa { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; display: none; overflow: hidden; flex-direction: column; align-items: center; justify-content: center; }
+        .activa { display: flex !important; }
+        .split { display: flex; width: 100%; height: 100%; }
+        .col-visual { flex: 1; position: relative; background: #000; }
+        .col-control { flex: 1; background: var(--gris); border-left: 2px solid #222; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; }
+        @media (max-width: 768px) { .split { flex-direction: column; } .col-control { border-left: none; border-top: 2px solid #222; } }
+        video, .mapa { width: 100%; height: 100%; object-fit: cover; }
+        .btn-mot { background: transparent; border: 2px solid var(--naranja); color: var(--naranja); padding: 15px 30px; border-radius: 5px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 20px; transition: 0.3s; width: 80%; }
+        .btn-mot:active { background: var(--naranja); color: #000; }
+        .btn-verde { border-color: var(--verde); color: var(--verde); }
+        input { background: transparent; border: none; border-bottom: 2px solid #555; color: white; padding: 15px; margin: 10px 0; width: 80%; text-align: center; font-size: 16px; outline: none; text-transform: uppercase; }
+        .timeline { display: flex; flex-direction: column; gap: 20px; overflow-y: auto; width: 100%; padding: 100px 0; align-items: center; }
+        .hito { display: flex; align-items: center; gap: 20px; width: 80%; max-width: 350px; opacity: 0.3; pointer-events: none; }
+        .hito.actual { opacity: 1; pointer-events: auto; }
+        .hito.completado { opacity: 0.6; pointer-events: auto; }
+        .bola { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #333; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .actual .bola { border-color: var(--naranja); box-shadow: 0 0 15px var(--naranja); color: var(--naranja); }
+        .completado .bola { border-color: var(--verde); color: var(--verde); }
+        #scan-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #reader { width: 300px; height: 300px; border: 2px solid var(--naranja); }
+    </style>
+</head>
+<body>
+
+    <div id="capa-login" class="capa activa">
+        <video class="video-bg" style="position:absolute; z-index:-1; opacity:0.5;" src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4" autoplay muted loop playsinline></video>
+        <h2 style="letter-spacing:5px;">MOT MOT</h2>
+        <div id="form-registro" style="width:100%; display:flex; flex-direction:column; align-items:center;">
+            <input type="text" id="reg-nombre" placeholder="TU NOMBRE">
+            <input type="text" id="reg-equipo" placeholder="NOMBRE DEL EQUIPO / BATALLA">
+            <input type="text" id="reg-clave" placeholder="CLAVE ASIGNADA">
+            <button class="btn-mot btn-verde" onclick="iniciarMision()">INICIAR MISIÓN</button>
+        </div>
+        <p id="aviso-login" style="color:red; font-size:12px; margin-top:20px;"></p>
+    </div>
+
+    <div id="capa-tablero" class="capa" style="background: #000;">
+        <div style="position:fixed; top:0; width:100%; background:rgba(0,0,0,0.9); padding:15px; border-bottom:1px solid #222; z-index:100; text-align:center;">
+            <span id="txt-saludo" style="color:var(--naranja); font-weight:bold;">ESTADO DE LA MISIÓN</span>
+        </div>
+        <div class="timeline" id="timeline-contenedor"></div>
+        <button onclick="cerrarSesion()" style="background:none; border:none; color:#444; margin-bottom:20px; font-size:10px;">CERRAR SESIÓN</button>
+    </div>
+
+    <div id="capa-pista" class="capa">
+        <div class="split">
+            <div class="col-visual">
+                <video id="pista-video" autoplay muted loop playsinline></video>
+                <div id="pista-mapa" class="mapa" style="display:none;"></div>
+            </div>
+            <div class="col-control">
+                <h3 id="pista-titulo" style="color:var(--naranja);"></h3>
+                <p id="pista-texto" style="font-size:14px; line-height:1.6;"></p>
+                <div id="pista-gps-ui" style="display:none;">
+                    <div id="pista-distancia" style="font-size:40px; font-weight:bold; color:var(--naranja);">--</div>
+                    <p>METROS RESTANTES</p>
+                </div>
+                <button class="btn-mot" onclick="abrirEscaner()">📸 ESCANEAR QR</button>
+                <button class="btn-mot" style="border-color:#333; color:#555; font-size:10px;" onclick="irATablero()">VOLVER AL TABLERO</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="capa-victoria" class="capa">
+        <h1 style="color:var(--verde);">¡MISIÓN CUMPLIDA!</h1>
+        <p id="msj-victoria"></p>
+        <div style="font-size:30px; margin:20px 0;" id="tiempo-total">--:--</div>
+        <button class="btn-mot" onclick="location.reload()">NUEVA AVENTURA</button>
+    </div>
+
+    <div id="scan-overlay">
+        <div id="reader"></div>
+        <button class="btn-mot" onclick="cerrarEscaner()">CANCELAR</button>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN CENTRAL
+        const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec";
+        
+        const PISTAS_DATA = {
+            1: { titulo: "LA BIENVENIDA", texto: "Busca la fuente antigua en el parque central.", video: "https://www.motmotexperiencias.com/wp-content/uploads/2025/12/Diseno-sin-titulo-3.mp4", qr: "BARICHARA_PISTA_01" },
+            2: { titulo: "FUNDACIÓN", texto: "Busca la Escuela Taller.", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-15.mp4", qr: "BARICHARA_PISTA_02", lat: 6.634477, lon: -73.224308 },
+            3: { titulo: "TABACO & PAPEL", texto: "Encuentra el Taller de Papel.", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", qr: "PISTA_03", lat: 6.634307, lon: -73.225441 },
+            10: { titulo: "TESORO FINAL", texto: "Escanea el cofre para reclamar tu victoria.", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-11.mp4", qr: "TESORO_MOTMOT_FINAL" }
+        };
+
+        let nivelActual = 1;
+        let qrScanner, map, watchID;
+
+        // 1. LOGIN CON SINCRONIZACIÓN DE EQUIPO
+        function iniciarMision() {
+            const nom = document.getElementById('reg-nombre').value.trim();
+            const equ = document.getElementById('reg-equipo').value.trim();
+            const cla = document.getElementById('reg-clave').value.toUpperCase().trim();
+
+            if(!nom || !cla) return alert("Ingresa tu nombre y la clave");
+
+            document.getElementById('aviso-login').innerText = "CONECTANDO CON EL SISTEMA...";
+
+            ejecutarJSONP(`${URL_GOOGLE}?action=registrar_inicio&codigo=${cla}&nombre=${encodeURIComponent(nom)}&equipo=${encodeURIComponent(equ)}`, (data) => {
+                if(data.status === "success") {
+                    localStorage.setItem('motmot_clave', cla);
+                    localStorage.setItem('motmot_agente', data.nombre_jugador);
+                    localStorage.setItem('motmot_equipo', data.nombre_equipo);
+                    
+                    nivelActual = data.pista_actual || 1;
+                    localStorage.setItem('motmot_pista', nivelActual);
+                    
+                    irATablero();
+                } else {
+                    document.getElementById('aviso-login').innerText = data.mensaje;
+                }
+            });
+        }
+
+        // 2. ÉXITO DE PISTA Y GUARDADO EN LA NUBE
+        function exitoPista() {
+            if(nivelActual === 10) {
+                finalizarMision();
+            } else {
+                nivelActual++;
+                const cla = localStorage.getItem('motmot_clave');
+                localStorage.setItem('motmot_pista', nivelActual);
+                
+                // Avisamos al Excel
+                ejecutarJSONP(`${URL_GOOGLE}?action=guardar_progreso&codigo=${cla}&pista=${nivelActual}`, (res) => {
+                    console.log("Progreso guardado");
+                });
+
+                alert("¡PISTA COMPLETADA! AVANZAS EN EL TABLERO.");
+                irATablero();
+            }
+        }
+
+        // 3. FINALIZAR Y MOSTRAR TIEMPO
+        function finalizarMision() {
+            const equ = localStorage.getItem('motmot_equipo');
+            ejecutarJSONP(`${URL_GOOGLE}?action=registrar_fin&equipo=${encodeURIComponent(equ)}`, (data) => {
+                if(data.status === "success") {
+                    document.getElementById('msj-victoria').innerText = "AGENTE " + localStorage.getItem('motmot_agente') + ", EL EQUIPO " + equ + " HA COMPLETADO LA MISIÓN.";
+                    document.getElementById('tiempo-total').innerText = data.tiempo + " MINUTOS";
+                    mostrarCapa('capa-victoria');
+                } else {
+                    alert("Hubo un problema al cerrar la misión.");
+                }
+            });
+        }
+
+        // --- NAVEGACIÓN Y UI ---
+        function irATablero() {
+            document.getElementById('txt-saludo').innerText = "AGENTE: " + localStorage.getItem('motmot_agente') + " | EQUIPO: " + localStorage.getItem('motmot_equipo');
+            nivelActual = parseInt(localStorage.getItem('motmot_pista') || 1);
+            const cont = document.getElementById('timeline-contenedor');
+            cont.innerHTML = "";
+
+            for(let i=1; i<=10; i++) {
+                if(!PISTAS_DATA[i] && i !== 10) continue;
+                const hito = document.createElement('div');
+                hito.className = `hito ${i < nivelActual ? 'completado' : (i === nivelActual ? 'actual' : '')}`;
+                hito.onclick = () => { if(i <= nivelActual) cargarPista(i); };
+                const label = PISTAS_DATA[i] ? PISTAS_DATA[i].titulo : "PRÓXIMAMENTE";
+                hito.innerHTML = `<div class="bola">${i === 10 ? '🏆' : i}</div><div>${label}</div>`;
+                cont.appendChild(hito);
+            }
+            mostrarCapa('capa-tablero');
+        }
+
+        function cargarPista(n) {
+            const data = PISTAS_DATA[n];
+            if(!data) return;
+            document.getElementById('pista-titulo').innerText = data.titulo;
+            document.getElementById('pista-texto').innerText = data.texto;
+            document.getElementById('pista-video').src = data.video;
+            
+            // Reset visuales
+            document.getElementById('pista-video').style.display = "block";
+            document.getElementById('pista-mapa').style.display = "none";
+            document.getElementById('pista-gps-ui').style.display = "none";
+
+            if(data.lat) iniciarGPS(data.lat, data.lon);
+            mostrarCapa('capa-pista');
+        }
+
+        // --- GPS Y ESCÁNER ---
+        function iniciarGPS(tLat, tLon) {
+            document.getElementById('pista-video').style.display = "none";
+            document.getElementById('pista-mapa').style.display = "block";
+            document.getElementById('pista-gps-ui').style.display = "block";
+            if(map) map.remove();
+            map = L.map('pista-mapa', {zoomControl: false}).setView([tLat, tLon], 17);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            L.marker([tLat, tLon]).addTo(map);
+
+            if(watchID) navigator.geolocation.clearWatch(watchID);
+            watchID = navigator.geolocation.watchPosition(pos => {
+                const d = calcularDistancia(pos.coords.latitude, pos.coords.longitude, tLat, tLon);
+                document.getElementById('pista-distancia').innerText = Math.round(d);
+            }, null, {enableHighAccuracy: true});
+        }
+
+        function abrirEscaner() {
+            document.getElementById('scan-overlay').style.display = 'flex';
+            qrScanner = new Html5Qrcode("reader");
+            qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
+                if(text.includes(PISTAS_DATA[nivelActual].qr)) {
+                    cerrarEscaner();
+                    exitoPista();
+                }
+            });
+        }
+
+        // --- UTILIDADES TÉCNICAS ---
+        function mostrarCapa(id) {
+            document.querySelectorAll('.capa').forEach(c => c.classList.remove('activa'));
+            document.getElementById(id).classList.add('activa');
+        }
+
+        function ejecutarJSONP(url, callback) {
+            const cbName = 'jsonp_' + Math.round(100000 * Math.random());
+            window[cbName] = (data) => { delete window[cbName]; document.body.removeChild(script); callback(data); };
+            const script = document.createElement('script');
+            script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cbName;
+            document.body.appendChild(script);
+        }
+
+        function calcularDistancia(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const a = Math.sin((lat2-lat1)*Math.PI/360)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin((lon2-lon1)*Math.PI/360)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function cerrarEscaner() { if(qrScanner) qrScanner.stop(); document.getElementById('scan-overlay').style.display = 'none'; }
+        function cerrarSesion() { localStorage.clear(); location.reload(); }
+    </script>
+</body>
+</html>
