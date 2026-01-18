@@ -108,7 +108,7 @@
     </div>
 
     <script>
-        // --- AQUÍ ESTÁ TU URL YA PEGADA CORRECTAMENTE ---
+        // --- TU URL CORRECTA ---
         const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec"; 
         
         const TEXTOS = {
@@ -166,7 +166,9 @@
                 en: { titulo: "FOUNDATION", texto: "Where building with earth is taught. Workshop School." }
             },
             3: { 
-                qr: "PISTA_03", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", lat: 6.634307, lon: -73.225441,
+                // AQUI ESTABA EL ERROR: Cambié "PISTA_03" por "BARICHARA_PISTA_03"
+                qr: "BARICHARA_PISTA_03", 
+                video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", lat: 6.634307, lon: -73.225441,
                 es: { titulo: "TABACO & PAPEL", texto: "Hojas que cuentan historias. Taller de Papel." },
                 en: { titulo: "TOBACCO & PAPER", texto: "Leaves that tell stories. Paper Workshop." }
             },
@@ -286,6 +288,7 @@
             document.getElementById('scan-overlay').style.display = 'flex';
             if(!qrScanner) qrScanner = new Html5Qrcode("reader");
             qrScanner.start({ facingMode: "environment" }, { fps: 20, qrbox: 280 }, (text) => {
+                // AQUÍ SE USA LA COMPARACIÓN: text.trim() === PISTAS_DATA[nivelActual].qr
                 if(text.trim() === PISTAS_DATA[nivelActual].qr) { cerrarEscaner(); exitoPista(); } 
                 else { alert(TEXTOS[idioma].err_qr); }
             }).catch(e => console.log(e));
