@@ -21,16 +21,13 @@
         
         input { background: rgba(255,255,255,0.1); border: none; border-bottom: 2px solid #555; color: white; padding: 15px; margin: 10px 0; width: 90%; text-align: center; font-size: 18px; outline: none; transition: 0.3s; }
         input:focus { border-bottom-color: var(--naranja); }
-        .oculto { display: none !important; }
 
-        .flag-btn { font-size: 40px; background: none; border: none; cursor: pointer; margin: 0 15px; filter: grayscale(0.5); transition: 0.3s; }
-        .flag-btn:hover, .flag-btn.selected { filter: grayscale(0); transform: scale(1.1); }
+        /* Estilos Tabla Ranking */
+        #tabla-ranking { width: 100%; max-width: 400px; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        #tabla-ranking th { color: var(--naranja); border-bottom: 1px solid #333; padding: 10px; }
+        #tabla-ranking td { padding: 10px; border-bottom: 1px solid #111; }
+        .pos { font-weight: bold; color: var(--naranja); width: 30px; }
 
-        .split { display: flex; width: 100%; height: 100%; flex-direction: column; }
-        .col-visual { flex: 1.3; position: relative; background: #000; }
-        .col-control { flex: 1; background: var(--gris); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; gap: 10px; border-top: 2px solid #222; }
-        video, .mapa { width: 100%; height: 100%; object-fit: cover; display: block; }
-        
         .timeline { display: flex; flex-direction: column; gap: 15px; overflow-y: auto; width: 100%; padding: 100px 0; align-items: center; }
         .hito { display: flex; align-items: center; gap: 20px; width: 85%; max-width: 380px; padding: 18px; background: rgba(255,255,255,0.03); border-radius: 12px; opacity: 0.2; pointer-events: none; border: 1px solid transparent; }
         .hito.actual { opacity: 1; pointer-events: auto; border-color: var(--naranja); }
@@ -59,14 +56,28 @@
             
             <button id="btn-entrar" class="btn-mot" style="border-color:var(--verde); color:var(--verde);" onclick="iniciarMision()"></button>
             
+            <button class="btn-mot" onclick="verRanking()" style="font-size: 11px; border-color: #444; color: #888;">🏆 VER RANKING</button>
+
             <p id="toggle-modo" onclick="alternarModoLogin()" style="margin-top:20px; font-size:12px; text-decoration:underline; cursor:pointer; color:#ccc;">
                 ¿Ya tienes una misión? Reingresar
             </p>
-
-            <button onclick="resetIdioma()" style="background:none; border:none; color:#777; margin-top:30px; font-size:10px;">Cambiar Idioma / Change Language</button>
         </div>
+    </div>
 
-        <p id="aviso-login" style="margin-top:20px; font-size:12px; color:var(--naranja); font-weight:bold;"></p>
+    <div id="capa-ranking" class="capa" style="background: #000; overflow-y: auto;">
+        <h2 style="color:var(--naranja);">TOP 10 AGENTES</h2>
+        <table id="tabla-ranking">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>AGENTE</th>
+                    <th>TIEMPO</th>
+                </tr>
+            </thead>
+            <tbody id="lista-ranking">
+                </tbody>
+        </table>
+        <button class="btn-mot" onclick="mostrarCapa('capa-login')">VOLVER</button>
     </div>
 
     <div id="capa-tablero" class="capa" style="background: var(--negro);">
@@ -99,7 +110,8 @@
         <h1 id="tit-victoria" style="color:var(--verde); font-size:45px;"></h1>
         <p id="msj-victoria"></p>
         <div id="tiempo-total" style="font-size:55px; color:var(--naranja); font-weight:bold;">--:--</div>
-        <button id="btn-nueva" class="btn-mot" onclick="cerrarSesion()" style="border-color:var(--verde); color:var(--verde);"></button>
+        <button class="btn-mot" onclick="verRanking()" style="border-color:var(--naranja); color:var(--naranja);">🏆 VER RANKING FINAL</button>
+        <button id="btn-nueva" class="btn-mot" onclick="cerrarSesion()" style="border-color:var(--verde); color:var(--verde); margin-top: 50px;"></button>
     </div>
 
     <div id="scan-overlay">
@@ -132,54 +144,19 @@
         };
 
         const PISTAS_DATA = {
-            1: { 
-                qr: "BARICHARA_PISTA_01", video: "https://www.motmotexperiencias.com/wp-content/uploads/2025/12/Diseno-sin-titulo-3.mp4",
-                es: { titulo: "LA BIENVENIDA", texto: "El agua es vida. Busca la fuente antigua." },
-                en: { titulo: "THE WELCOME", texto: "Water is life. Find the ancient fountain." }
-            },
-            2: { 
-                qr: "BARICHARA_PISTA_02", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-15.mp4", lat: 6.634477, lon: -73.224308,
-                es: { titulo: "FUNDACIÓN", texto: "Donde se aprende a construir con tierra. Escuela Taller." },
-                en: { titulo: "FOUNDATION", texto: "Where building with earth is taught. Workshop School." }
-            },
-            3: { 
-                qr: "BARICHARA_PISTA_03", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", lat: 6.634307, lon: -73.225441,
-                es: { titulo: "TABACO & PAPEL", texto: "Hojas que cuentan historias. Taller de Papel." },
-                en: { titulo: "TOBACCO & PAPER", texto: "Leaves that tell stories. Paper Workshop." }
-            },
-            4: { 
-                qr: "BARICHARA_PISTA_04", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", 
-                es: { titulo: "PISTA 4", texto: "Sigue las instrucciones." }, en: { titulo: "CLUE 4", texto: "Follow instructions." }
-            },
-            5: { 
-                qr: "BARICHARA_PISTA_05", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", 
-                es: { titulo: "PISTA 5", texto: "Continúa explorando." }, en: { titulo: "CLUE 5", texto: "Keep exploring." }
-            },
-            6: { 
-                qr: "BARICHARA_PISTA_06", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", 
-                es: { titulo: "PISTA 6", texto: "Ya casi llegas." }, en: { titulo: "CLUE 6", texto: "Almost there." }
-            },
-            7: { 
-                qr: "BARICHARA_PISTA_07", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", 
-                es: { titulo: "PISTA 7", texto: "Observa los detalles." }, en: { titulo: "CLUE 7", texto: "Watch the details." }
-            },
-            8: { 
-                qr: "BARICHARA_PISTA_08", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", 
-                es: { titulo: "PISTA 8", texto: "Un paso más." }, en: { titulo: "CLUE 8", texto: "One more step." }
-            },
-            9: { 
-                qr: "BARICHARA_PISTA_09", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", 
-                es: { titulo: "PISTA 9", texto: "Prepárate para el final." }, en: { titulo: "CLUE 9", texto: "Prepare for the end." }
-            },
-            10: { 
-                qr: "TESORO_MOTMOT_FINAL", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-11.mp4",
-                es: { titulo: "EL TESORO", texto: "¡Has llegado! Escanea el cofre final." },
-                en: { titulo: "THE TREASURE", texto: "You made it! Scan the final chest." }
-            }
+            1: { qr: "BARICHARA_PISTA_01", video: "https://www.motmotexperiencias.com/wp-content/uploads/2025/12/Diseno-sin-titulo-3.mp4", es: { titulo: "LA BIENVENIDA", texto: "El agua es vida. Busca la fuente antigua." }, en: { titulo: "THE WELCOME", texto: "Water is life. Find the ancient fountain." } },
+            2: { qr: "BARICHARA_PISTA_02", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-15.mp4", lat: 6.634477, lon: -73.224308, es: { titulo: "FUNDACIÓN", texto: "Donde se aprende a construir con tierra. Escuela Taller." }, en: { titulo: "FOUNDATION", texto: "Where building with earth is taught. Workshop School." } },
+            3: { qr: "BARICHARA_PISTA_03", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", lat: 6.634307, lon: -73.225441, es: { titulo: "TABACO & PAPEL", texto: "Hojas que cuentan historias. Taller de Papel." }, en: { titulo: "TOBACCO & PAPER", texto: "Leaves that tell stories. Paper Workshop." } },
+            4: { qr: "BARICHARA_PISTA_04", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 4", texto: "Sigue las instrucciones." }, en: { titulo: "CLUE 4", texto: "Follow instructions." } },
+            5: { qr: "BARICHARA_PISTA_05", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 5", texto: "Continúa explorando." }, en: { titulo: "CLUE 5", texto: "Keep exploring." } },
+            6: { qr: "BARICHARA_PISTA_06", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 6", texto: "Ya casi llegas." }, en: { titulo: "CLUE 6", texto: "Almost there." } },
+            7: { qr: "BARICHARA_PISTA_07", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 7", texto: "Observa los detalles." }, en: { titulo: "CLUE 7", texto: "Watch the details." } },
+            8: { qr: "BARICHARA_PISTA_08", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 8", texto: "Un paso más." }, en: { titulo: "CLUE 8", texto: "One more step." } },
+            9: { qr: "BARICHARA_PISTA_09", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 9", texto: "Prepárate para el final." }, en: { titulo: "CLUE 9", texto: "Prepare for the end." } },
+            10: { qr: "TESORO_MOTMOT_FINAL", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-11.mp4", es: { titulo: "EL TESORO", texto: "¡Has llegado! Escanea el cofre final." }, en: { titulo: "THE TREASURE", texto: "You made it! Scan the final chest." } }
         };
 
         const ORDEN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; 
-        
         let idioma = 'es';
         let nivelActual = 1;
         let qrScanner = null;
@@ -189,6 +166,27 @@
             if(localStorage.getItem('motmot_lang')) setLanguage(localStorage.getItem('motmot_lang'), false);
             if(localStorage.getItem('motmot_clave')) iniciarMision(true);
         };
+
+        function verRanking() {
+            mostrarCapa('capa-ranking');
+            const lista = document.getElementById('lista-ranking');
+            lista.innerHTML = "<tr><td colspan='3'>Cargando ranking...</td></tr>";
+
+            ejecutarJSONP(`${URL_GOOGLE}?action=obtener_ranking`, (data) => {
+                if(data.status === "success") {
+                    lista.innerHTML = "";
+                    data.ranking.forEach((jugador, index) => {
+                        lista.innerHTML += `
+                            <tr>
+                                <td class="pos">${index + 1}</td>
+                                <td>${jugador.nombre}<br><small style="color:#666">${jugador.grupo}</small></td>
+                                <td>${jugador.tiempo} min</td>
+                            </tr>
+                        `;
+                    });
+                }
+            });
+        }
 
         function alternarModoLogin() {
             modoReingreso = !modoReingreso;
@@ -202,39 +200,23 @@
             idioma = lang;
             localStorage.setItem('motmot_lang', lang);
             const t = TEXTOS[lang];
-            
             document.getElementById('reg-nombre').placeholder = t.ph_nombre;
             document.getElementById('reg-clave').placeholder = t.ph_clave;
+            document.getElementById('btn-entrar').innerText = modoReingreso ? t.btn_recuperar : t.btn_entrar;
             document.getElementById('btn-escanear-accion').innerText = t.btn_escanear;
             document.getElementById('btn-volver-tablero').innerText = t.btn_tablero;
-            document.getElementById('btn-cancelar-scan').innerText = t.btn_cancelar;
             document.getElementById('tit-victoria').innerText = t.tit_victoria;
             document.getElementById('btn-nueva').innerText = t.btn_nueva;
-            document.getElementById('txt-metros').innerText = t.txt_metros;
-            
-            if (modoReingreso) {
-                document.getElementById('btn-entrar').innerText = t.btn_recuperar;
-                document.getElementById('toggle-modo').innerText = t.toggle_nuevo;
-            } else {
-                document.getElementById('btn-entrar').innerText = t.btn_entrar;
-                document.getElementById('toggle-modo').innerText = t.toggle_reingreso;
-            }
-
             document.getElementById('paso-idioma').style.display = 'none';
             document.getElementById('paso-form').style.display = 'flex';
         }
 
-        function resetIdioma() { localStorage.removeItem('motmot_lang'); location.reload(); }
-
         function iniciarMision(esRecarga = false) {
             let nom = document.getElementById('reg-nombre').value.trim();
             const cla = esRecarga ? localStorage.getItem('motmot_clave') : document.getElementById('reg-clave').value.toUpperCase().trim();
-            
             if (esRecarga) nom = localStorage.getItem('motmot_agente');
             if (!esRecarga && !modoReingreso && !nom) { alert(TEXTOS[idioma].err_need_name); return; }
-            if (modoReingreso) nom = "";
             if(!cla) return;
-            
             if(esRecarga || modoReingreso) document.getElementById('aviso-login').innerText = TEXTOS[idioma].msg_recuperando;
 
             ejecutarJSONP(`${URL_GOOGLE}?action=registrar_inicio&codigo=${cla}&nombre=${encodeURIComponent(nom)}`, (data) => {
@@ -242,14 +224,11 @@
                     localStorage.setItem('motmot_clave', cla);
                     localStorage.setItem('motmot_agente', data.nombre_jugador);
                     localStorage.setItem('motmot_equipo', data.nombre_equipo);
-                    
                     nivelActual = parseInt(data.pista_actual || 1);
                     localStorage.setItem('motmot_pista', nivelActual);
                     irATablero();
                 } else if(!esRecarga) {
-                    if (data.code === "ERR_NEED_NAME") alert(TEXTOS[idioma].err_need_name);
-                    else if (data.code === "ERR_USED") alert(TEXTOS[idioma].err_code);
-                    else document.getElementById('aviso-login').innerText = TEXTOS[idioma].err_code;
+                    document.getElementById('aviso-login').innerText = TEXTOS[idioma].err_code;
                 }
             });
         }
@@ -258,8 +237,7 @@
             nivelActual = parseInt(localStorage.getItem('motmot_pista') || 1);
             const cont = document.getElementById('timeline-contenedor');
             cont.innerHTML = "";
-            const t = TEXTOS[idioma];
-            document.getElementById('txt-saludo').innerText = `${t.lbl_agente}: ${localStorage.getItem('motmot_agente')}`;
+            document.getElementById('txt-saludo').innerText = `${TEXTOS[idioma].lbl_agente}: ${localStorage.getItem('motmot_agente')}`;
             ORDEN.forEach(i => {
                 const infoPista = PISTAS_DATA[i][idioma];
                 const hito = document.createElement('div');
@@ -290,7 +268,7 @@
             qrScanner.start({ facingMode: "environment" }, { fps: 20, qrbox: 280 }, (text) => {
                 if(text.trim() === PISTAS_DATA[nivelActual].qr) { cerrarEscaner(); exitoPista(); } 
                 else { alert(TEXTOS[idioma].err_qr); }
-            }).catch(e => console.log(e));
+            });
         }
 
         function exitoPista() {
@@ -307,8 +285,7 @@
             const codigo = localStorage.getItem('motmot_clave');
             ejecutarJSONP(`${URL_GOOGLE}?action=registrar_fin&codigo=${codigo}`, (data) => {
                 document.getElementById('tiempo-total').innerText = `${data.tiempo} MIN`;
-                const msg = (idioma === 'es') ? `¡GRAN TRABAJO!` : `GREAT JOB!`;
-                document.getElementById('msj-victoria').innerText = msg;
+                document.getElementById('msj-victoria').innerText = `¡GRAN TRABAJO AGENTE!`;
             });
         }
 
@@ -323,11 +300,10 @@
             map = L.map('pista-mapa', {zoomControl: false}).setView([tLat, tLon], 18);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             L.marker([tLat, tLon]).addTo(map);
-            if(watchID) navigator.geolocation.clearWatch(watchID);
             watchID = navigator.geolocation.watchPosition(pos => {
                 const d = calcularDistancia(pos.coords.latitude, pos.coords.longitude, tLat, tLon);
                 document.getElementById('pista-distancia').innerText = Math.round(d);
-            }, null, {enableHighAccuracy: true});
+            });
         }
 
         function calcularDistancia(lat1, lon1, lat2, lon2) {
