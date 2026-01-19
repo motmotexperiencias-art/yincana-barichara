@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MOT MOT V5 - PRUEBA</title>
+    <title>MOT MOT | Barichara</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -12,9 +12,6 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100dvh; font-family: 'Verdana', sans-serif; overflow: hidden; }
         
-        /* ESTO ES PARA LA PRUEBA - BARRA ROJA */
-        #barra-debug { width: 100%; background: red; color: white; text-align: center; padding: 10px; font-weight: bold; position: fixed; top: 0; z-index: 99999; }
-
         .capa { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; z-index: 10; }
         .activa { display: flex !important; }
         .video-bg { position: absolute; z-index: -1; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
@@ -45,8 +42,6 @@
     </style>
 </head>
 <body>
-    
-    <div id="barra-debug">VERSIÓN NUEVA V5 - SI LEES ESTO EL CÓDIGO SE ACTUALIZÓ</div>
 
     <div id="capa-login" class="capa activa">
         <video class="video-bg" autoplay muted loop playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
@@ -59,7 +54,6 @@
         </div>
 
         <div id="paso-form" style="display:none; width:100%; flex-direction:column; align-items:center;">
-            
             <input type="text" id="reg-nombre" placeholder="TU NOMBRE">
             <input type="text" id="reg-clave" placeholder="CLAVE ASIGNADA">
             
@@ -76,7 +70,7 @@
     </div>
 
     <div id="capa-tablero" class="capa" style="background: var(--negro);">
-        <div style="position:fixed; top:0; width:100%; background:rgba(0,0,0,0.95); padding:20px; border-bottom:1px solid #222; z-index:100; margin-top: 30px;">
+        <div style="position:fixed; top:0; width:100%; background:rgba(0,0,0,0.95); padding:20px; border-bottom:1px solid #222; z-index:100;">
             <span id="txt-saludo" style="color:var(--naranja); font-weight:bold; font-size: 13px;"></span>
         </div>
         <div class="timeline" id="timeline-contenedor"></div>
