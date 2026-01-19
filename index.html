@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MOT MOT | Barichara</title>
+    <title>MOT MOT V5 - PRUEBA</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -12,6 +12,9 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100dvh; font-family: 'Verdana', sans-serif; overflow: hidden; }
         
+        /* ESTO ES PARA LA PRUEBA - BARRA ROJA */
+        #barra-debug { width: 100%; background: red; color: white; text-align: center; padding: 10px; font-weight: bold; position: fixed; top: 0; z-index: 99999; }
+
         .capa { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; z-index: 10; }
         .activa { display: flex !important; }
         .video-bg { position: absolute; z-index: -1; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
@@ -19,7 +22,6 @@
         .btn-mot { background: transparent; border: 2px solid var(--naranja); color: var(--naranja); padding: 16px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; width: 90%; max-width: 300px; font-size: 14px; margin-top: 15px; transition: 0.3s; }
         .btn-mot:active { background: var(--naranja); color: #000; transform: scale(0.96); }
         
-        /* Estilos de los inputs */
         input { background: rgba(255,255,255,0.1); border: none; border-bottom: 2px solid #555; color: white; padding: 15px; margin: 10px 0; width: 90%; text-align: center; font-size: 18px; outline: none; transition: 0.3s; }
         input:focus { border-bottom-color: var(--naranja); }
         .oculto { display: none !important; }
@@ -43,6 +45,8 @@
     </style>
 </head>
 <body>
+    
+    <div id="barra-debug">VERSIÓN NUEVA V5 - SI LEES ESTO EL CÓDIGO SE ACTUALIZÓ</div>
 
     <div id="capa-login" class="capa activa">
         <video class="video-bg" autoplay muted loop playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
@@ -55,7 +59,8 @@
         </div>
 
         <div id="paso-form" style="display:none; width:100%; flex-direction:column; align-items:center;">
-            <input type="text" id="reg-nombre" placeholder="TU NOMBRE (EJ: TONINO)">
+            
+            <input type="text" id="reg-nombre" placeholder="TU NOMBRE">
             <input type="text" id="reg-clave" placeholder="CLAVE ASIGNADA">
             
             <button id="btn-entrar" class="btn-mot" style="border-color:var(--verde); color:var(--verde);" onclick="iniciarMision()"></button>
@@ -71,7 +76,7 @@
     </div>
 
     <div id="capa-tablero" class="capa" style="background: var(--negro);">
-        <div style="position:fixed; top:0; width:100%; background:rgba(0,0,0,0.95); padding:20px; border-bottom:1px solid #222; z-index:100;">
+        <div style="position:fixed; top:0; width:100%; background:rgba(0,0,0,0.95); padding:20px; border-bottom:1px solid #222; z-index:100; margin-top: 30px;">
             <span id="txt-saludo" style="color:var(--naranja); font-weight:bold; font-size: 13px;"></span>
         </div>
         <div class="timeline" id="timeline-contenedor"></div>
@@ -109,47 +114,26 @@
     </div>
 
     <script>
-        // --- TU URL CORRECTA ---
         const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec"; 
         
         const TEXTOS = {
             es: {
-                ph_nombre: "TU NOMBRE (EJ: TONINO)",
-                ph_clave: "CLAVE ASIGNADA", // Texto corregido
-                btn_entrar: "INICIAR AVENTURA",
-                btn_recuperar: "RECUPERAR MISIÓN",
-                toggle_reingreso: "¿Ya tienes una misión? Reingresar",
-                toggle_nuevo: "¿Eres nuevo? Registrarse",
-                btn_escanear: "📸 ESCANEAR CÓDIGO",
-                btn_tablero: "VOLVER AL TABLERO",
-                btn_cancelar: "CANCELAR",
-                tit_victoria: "¡MISIÓN CUMPLIDA!",
-                btn_nueva: "CERRAR SESIÓN",
-                txt_metros: "METROS AL OBJETIVO",
-                err_qr: "CÓDIGO INCORRECTO",
-                err_code: "CÓDIGO INVÁLIDO O AGOTADO",
-                err_need_name: "DEBES ESCRIBIR TU NOMBRE",
-                msg_recuperando: "BUSCANDO TUS DATOS...",
-                lbl_agente: "AGENTE"
+                ph_nombre: "TU NOMBRE", ph_clave: "CÓDIGO DE ACCESO", btn_entrar: "INICIAR AVENTURA",
+                btn_recuperar: "RECUPERAR MISIÓN", toggle_reingreso: "¿Ya tienes una misión? Reingresar",
+                toggle_nuevo: "¿Eres nuevo? Registrarse", btn_escanear: "📸 ESCANEAR CÓDIGO",
+                btn_tablero: "VOLVER AL TABLERO", btn_cancelar: "CANCELAR", tit_victoria: "¡MISIÓN CUMPLIDA!",
+                btn_nueva: "CERRAR SESIÓN", txt_metros: "METROS AL OBJETIVO", err_qr: "CÓDIGO INCORRECTO",
+                err_code: "CÓDIGO INVÁLIDO O AGOTADO", err_need_name: "DEBES ESCRIBIR TU NOMBRE",
+                msg_recuperando: "BUSCANDO TUS DATOS...", lbl_agente: "AGENTE"
             },
             en: {
-                ph_nombre: "YOUR NAME",
-                ph_clave: "ACCESS CODE",
-                btn_entrar: "START ADVENTURE",
-                btn_recuperar: "RESUME MISSION",
-                toggle_reingreso: "Already started? Resume here",
-                toggle_nuevo: "New Agent? Register here",
-                btn_escanear: "📸 SCAN CODE",
-                btn_tablero: "BACK TO BOARD",
-                btn_cancelar: "CANCEL",
-                tit_victoria: "MISSION ACCOMPLISHED!",
-                btn_nueva: "LOG OUT",
-                txt_metros: "METERS TO TARGET",
-                err_qr: "WRONG CODE",
-                err_code: "INVALID OR EXPIRED CODE",
-                err_need_name: "NAME IS REQUIRED",
-                msg_recuperando: "SEARCHING DATA...",
-                lbl_agente: "AGENT"
+                ph_nombre: "YOUR NAME", ph_clave: "ACCESS CODE", btn_entrar: "START ADVENTURE",
+                btn_recuperar: "RESUME MISSION", toggle_reingreso: "Already started? Resume here",
+                toggle_nuevo: "New Agent? Register here", btn_escanear: "📸 SCAN CODE",
+                btn_tablero: "BACK TO BOARD", btn_cancelar: "CANCEL", tit_victoria: "MISSION ACCOMPLISHED!",
+                btn_nueva: "LOG OUT", txt_metros: "METERS TO TARGET", err_qr: "WRONG CODE",
+                err_code: "INVALID OR EXPIRED CODE", err_need_name: "NAME IS REQUIRED",
+                msg_recuperando: "SEARCHING DATA...", lbl_agente: "AGENT"
             }
         };
 
@@ -249,7 +233,6 @@
         function resetIdioma() { localStorage.removeItem('motmot_lang'); location.reload(); }
 
         function iniciarMision(esRecarga = false) {
-            // SOLO lee Nombre y Clave
             let nom = document.getElementById('reg-nombre').value.trim();
             const cla = esRecarga ? localStorage.getItem('motmot_clave') : document.getElementById('reg-clave').value.toUpperCase().trim();
             
@@ -260,12 +243,11 @@
             
             if(esRecarga || modoReingreso) document.getElementById('aviso-login').innerText = TEXTOS[idioma].msg_recuperando;
 
-            // Envia SOLO action, codigo y nombre. El backend se encarga del resto.
             ejecutarJSONP(`${URL_GOOGLE}?action=registrar_inicio&codigo=${cla}&nombre=${encodeURIComponent(nom)}`, (data) => {
                 if(data.status === "success") {
                     localStorage.setItem('motmot_clave', cla);
                     localStorage.setItem('motmot_agente', data.nombre_jugador);
-                    localStorage.setItem('motmot_equipo', data.nombre_equipo); // Se guarda internamente
+                    localStorage.setItem('motmot_equipo', data.nombre_equipo);
                     
                     nivelActual = parseInt(data.pista_actual || 1);
                     localStorage.setItem('motmot_pista', nivelActual);
@@ -283,8 +265,7 @@
             const cont = document.getElementById('timeline-contenedor');
             cont.innerHTML = "";
             const t = TEXTOS[idioma];
-            // Muestra AGENTE: [Nombre] | EQUIPO: [Equipo detectado automaticamente]
-            document.getElementById('txt-saludo').innerText = `${t.lbl_agente}: ${localStorage.getItem('motmot_agente')} | ${localStorage.getItem('motmot_equipo')}`;
+            document.getElementById('txt-saludo').innerText = `${t.lbl_agente}: ${localStorage.getItem('motmot_agente')}`;
             ORDEN.forEach(i => {
                 const infoPista = PISTAS_DATA[i][idioma];
                 const hito = document.createElement('div');
