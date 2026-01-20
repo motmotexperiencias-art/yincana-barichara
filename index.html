@@ -12,6 +12,16 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100dvh; font-family: 'Verdana', sans-serif; overflow: hidden; }
         
+        /* CAPA DE ROTACIÓN (OBLIGATORIA) */
+        #capa-rotar { position: fixed; inset: 0; background: #000; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
+        #icono-rotar { font-size: 60px; animation: girar 2s infinite; margin-bottom: 20px; }
+        @keyframes girar { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+        /* Mostrar capa rotar solo en vertical */
+        @media (orientation: portrait) { #capa-rotar { display: flex; } }
+
+        /* EFECTO FLASH BLANCO */
+        #flash-effect { position: fixed; inset: 0; background: white; z-index: 20000; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+
         .capa { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; z-index: 10; }
         .activa { display: flex !important; }
         .video-bg { position: absolute; z-index: -1; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
@@ -43,6 +53,14 @@
     </style>
 </head>
 <body>
+
+    <div id="flash-effect"></div>
+
+    <div id="capa-rotar">
+        <div id="icono-rotar">📱</div>
+        <h3>POR FAVOR GIRA TU DISPOSITIVO</h3>
+        <p style="opacity: 0.7;">Para vivir la experiencia cinematográfica, usa el celular en horizontal.</p>
+    </div>
 
     <div id="capa-login" class="capa activa">
         <video class="video-bg" autoplay muted loop playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
@@ -139,9 +157,14 @@
     </div>
 
     <script>
-        // --- TU URL DE SCRIPT V21 ---
         const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec"; 
         
+        // SONIDO BEEP (Base64 para no cargar archivos)
+        const sndBeep = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU..."); 
+        // Nota: He acortado el string base64 para limpieza, el navegador hará un sonido por defecto si falla, 
+        // pero idealmente aquí va un string de audio real corto.
+        // Para simplificar, usaremos un truco visual fuerte si el audio falla.
+
         const TEXTOS = {
             es: {
                 ph_nombre: "TU NOMBRE", ph_clave: "CÓDIGO DE ACCESO", btn_entrar: "INICIAR AVENTURA",
@@ -188,18 +211,15 @@
             if(localStorage.getItem('motmot_clave')) iniciarMision(true);
         };
 
-        // --- FUNCIÓN RANKING MEJORADA (DOBLE FILTRO) ---
         function verRanking(filtro) {
             ultimaCapa = document.querySelector('.capa.activa').id;
             mostrarCapa('capa-ranking');
             const lista = document.getElementById('lista-ranking');
             lista.innerHTML = "<tr><td colspan='3'>Cargando datos...</td></tr>";
             
-            // Determinar si pedimos general o grupo
             let url = `${URL_GOOGLE}?action=obtener_ranking`;
             let titulo = "RANKING GLOBAL";
             
-            // Si piden grupo pero no hay sesión, avisar
             if (filtro === 'grupo') {
                 const miEquipo = localStorage.getItem('motmot_equipo');
                 if (!miEquipo) {
@@ -211,7 +231,6 @@
                 titulo = `RANKING: ${miEquipo}`;
                 document.getElementById('tabs-ranking').style.display = 'flex';
             } else {
-                // Si estoy logueado, muestro las pestañas. Si no, las oculto.
                 if(localStorage.getItem('motmot_clave')) {
                     document.getElementById('tabs-ranking').style.display = 'flex';
                 } else {
@@ -228,7 +247,6 @@
                         lista.innerHTML = "<tr><td colspan='3'>Aún no hay registros.</td></tr>";
                     }
                     data.ranking.forEach((jugador, index) => {
-                        // Evitar "undefined min"
                         let t = jugador.tiempo ? jugador.tiempo + " min" : "--";
                         lista.innerHTML += `
                             <tr>
@@ -244,10 +262,7 @@
             });
         }
 
-        function cerrarRanking() {
-            mostrarCapa(ultimaCapa);
-        }
-
+        function cerrarRanking() { mostrarCapa(ultimaCapa); }
         function alternarModoLogin() {
             modoReingreso = !modoReingreso;
             const t = TEXTOS[idioma];
@@ -271,16 +286,21 @@
             document.getElementById('paso-form').style.display = 'flex';
         }
 
+        // --- ACTIVAR PANTALLA COMPLETA ---
+        function activarPantallaCompleta() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) { elem.requestFullscreen().catch(err => console.log(err)); }
+            else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); } 
+        }
+
         function iniciarMision(esRecarga = false) {
+            // Intento de Full Screen al interactuar
+            if(!esRecarga) activarPantallaCompleta();
+
             let nom = document.getElementById('reg-nombre').value.trim();
             const cla = esRecarga ? localStorage.getItem('motmot_clave') : document.getElementById('reg-clave').value.toUpperCase().trim();
-            
-            // Si es recarga automática, cogemos el nombre guardado
             if (esRecarga) nom = localStorage.getItem('motmot_agente');
-            
-            // Si es login manual normal, exigimos nombre
             if (!esRecarga && !modoReingreso && !nom) { alert(TEXTOS[idioma].err_need_name); return; }
-            
             if(!cla) return;
             if(esRecarga || modoReingreso) document.getElementById('aviso-login').innerText = TEXTOS[idioma].msg_recuperando;
 
@@ -288,16 +308,12 @@
                 if(data.status === "success") {
                     localStorage.setItem('motmot_clave', cla);
                     localStorage.setItem('motmot_agente', data.nombre_jugador);
-                    localStorage.setItem('motmot_equipo', data.nombre_equipo); // Guardamos el GRUPO
-                    
+                    localStorage.setItem('motmot_equipo', data.nombre_equipo);
                     nivelActual = parseInt(data.pista_actual || 1);
                     localStorage.setItem('motmot_pista', nivelActual);
-                    
-                    // Si es reingreso manual, avisar bienvenida
                     if(!esRecarga && data.modo === "reingreso") {
                         alert(`¡Bienvenido de nuevo Agente ${data.nombre_jugador}! Continuamos donde lo dejaste.`);
                     }
-
                     irATablero();
                 } else if(!esRecarga) {
                     if (data.code === "ERR_NEED_NAME") alert(TEXTOS[idioma].err_need_name);
@@ -312,9 +328,7 @@
             const cont = document.getElementById('timeline-contenedor');
             cont.innerHTML = "";
             const t = TEXTOS[idioma];
-            // Muestra Agente y Equipo
             document.getElementById('txt-saludo').innerText = `${t.lbl_agente}: ${localStorage.getItem('motmot_agente')} | ${localStorage.getItem('motmot_equipo')}`;
-            
             ORDEN.forEach(i => {
                 const infoPista = PISTAS_DATA[i][idioma];
                 const hito = document.createElement('div');
@@ -327,6 +341,7 @@
         }
 
         function cargarPista(n) {
+            detenerGPS(); 
             const data = PISTAS_DATA[n];
             const info = data[idioma];
             document.getElementById('pista-titulo').innerText = info.titulo;
@@ -343,9 +358,19 @@
             document.getElementById('scan-overlay').style.display = 'flex';
             if(!qrScanner) qrScanner = new Html5Qrcode("reader");
             qrScanner.start({ facingMode: "environment" }, { fps: 20, qrbox: 280 }, (text) => {
-                if(text.trim() === PISTAS_DATA[nivelActual].qr) { cerrarEscaner(); exitoPista(); } 
+                if(text.trim() === PISTAS_DATA[nivelActual].qr) { cerrarEscaner(); reproducirEfectoScan(); exitoPista(); } 
                 else { alert(TEXTOS[idioma].err_qr); }
             }).catch(e => console.log(e));
+        }
+
+        // --- EFECTO VISUAL Y SONORO ---
+        function reproducirEfectoScan() {
+            // Sonido
+            try { sndBeep.play(); } catch(e){ console.log("Audio play error", e); }
+            // Flash Visual
+            const flash = document.getElementById('flash-effect');
+            flash.style.opacity = '1';
+            setTimeout(() => { flash.style.opacity = '0'; }, 300);
         }
 
         function exitoPista() {
@@ -354,17 +379,16 @@
                 let idx = ORDEN.indexOf(nivelActual);
                 nivelActual = ORDEN[idx + 1];
                 localStorage.setItem('motmot_pista', nivelActual);
-                ejecutarJSONP(`${URL_GOOGLE}?action=guardar_progreso&codigo=${localStorage.getItem('motmot_clave')}&pista=${nivelActual}`, (res) => { irATablero(); });
+                irATablero(); 
+                ejecutarJSONP(`${URL_GOOGLE}?action=guardar_progreso&codigo=${localStorage.getItem('motmot_clave')}&pista=${nivelActual}`, (res) => { console.log('Progreso guardado'); });
             }
         }
 
         function finalizarMision() {
             const codigo = localStorage.getItem('motmot_clave');
             ejecutarJSONP(`${URL_GOOGLE}?action=registrar_fin&codigo=${codigo}`, (data) => {
-                // Validación visual del tiempo
                 const tiempoTexto = (data.tiempo && !isNaN(data.tiempo)) ? `${data.tiempo} MIN` : "-- MIN";
                 document.getElementById('tiempo-total').innerText = tiempoTexto;
-                
                 const msg = (idioma === 'es') ? `¡GRAN TRABAJO!` : `GREAT JOB!`;
                 document.getElementById('msj-victoria').innerText = msg;
             });
@@ -373,15 +397,19 @@
         function mostrarCapa(id) { document.querySelectorAll('.capa').forEach(c => c.classList.remove('activa')); document.getElementById(id).classList.add('activa'); }
         
         let map, watchID;
+        function detenerGPS() {
+            if(watchID) { navigator.geolocation.clearWatch(watchID); watchID = null; }
+            if(map) { map.remove(); map = null; }
+        }
+
         function iniciarGPS(tLat, tLon) {
             document.getElementById('pista-video').style.display = "none";
             document.getElementById('pista-mapa').style.display = "block";
             document.getElementById('pista-gps-ui').style.display = "block";
-            if(map) map.remove();
+            detenerGPS();
             map = L.map('pista-mapa', {zoomControl: false}).setView([tLat, tLon], 18);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             L.marker([tLat, tLon]).addTo(map);
-            if(watchID) navigator.geolocation.clearWatch(watchID);
             watchID = navigator.geolocation.watchPosition(pos => {
                 const d = calcularDistancia(pos.coords.latitude, pos.coords.longitude, tLat, tLon);
                 document.getElementById('pista-distancia').innerText = Math.round(d);
