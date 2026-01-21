@@ -21,16 +21,14 @@
         
         body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100dvh; width: 100vw; font-family: 'Verdana', sans-serif; overflow: hidden; }
 
-        /* Capas Generales: AJUSTE DE MARGENES VERTICALES */
+        /* Capas Generales */
         .capa { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; 
             display: none; flex-direction: column; align-items: center; justify-content: center; 
-            /* Reducimos padding vertical drasticamente para que quepa en landscape */
             padding: 10px 40px; 
             padding-left: max(40px, env(safe-area-inset-left)); 
             padding-right: max(40px, env(safe-area-inset-right));
             text-align: center; z-index: 10; background: var(--negro); 
-            /* Scroll de seguridad por si la pantalla es muy bajita */
             overflow-y: auto; 
         }
         .activa { display: flex !important; }
@@ -40,26 +38,25 @@
             width: 100%;
             max-width: 500px;
             display: flex; flex-direction: column; align-items: center;
-            /* Asegura que si hay scroll, el contenido tenga margen abajo */
             padding-bottom: 20px; 
         }
 
         .video-bg { position: absolute; z-index: -1; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: brightness(0.7); }
 
-        /* Botones: Margen superior reducido */
+        /* Botones */
         .btn-mot { 
             background: transparent; border: 2px solid var(--naranja); color: var(--naranja); 
             padding: 12px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; 
             text-transform: uppercase; width: auto; min-width: 220px; font-size: 14px; 
-            margin-top: 15px; /* Reducido de 25px */
+            margin-top: 15px; 
             transition: 0.3s; letter-spacing: 2px;
         }
         .btn-mot:active { background: var(--naranja); color: #000; transform: scale(0.95); }
 
-        /* Inputs: Margen reducido */
+        /* Inputs */
         input { 
             background: transparent; border: none; border-bottom: 2px solid #666; 
-            color: white; padding: 10px; margin: 10px 0; /* Reducido de 15px */
+            color: white; padding: 10px; margin: 10px 0; 
             width: 100%; max-width: 300px; 
             text-align: center; font-size: 18px; outline: none; transition: 0.3s; border-radius: 0; 
         }
@@ -86,6 +83,7 @@
             font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
         }
         
+        /* Botón Audio Login */
         #btn-audio-login {
             position: absolute; top: 20px; right: 20px;
             font-size: 20px; cursor: pointer; opacity: 0.8; z-index: 20;
@@ -103,7 +101,7 @@
 
         /* SELECTOR DE IDIOMA */
         #paso-idioma {
-            display: flex; gap: 40px; justify-content: center; margin-top: 15px; /* Reducido */
+            display: flex; gap: 40px; justify-content: center; margin-top: 15px; 
         }
         .lang-option {
             display: flex; flex-direction: column; align-items: center; cursor: pointer;
@@ -111,7 +109,7 @@
         }
         .lang-option:active { transform: scale(1.1); }
         .flag-btn { 
-            font-size: 50px; /* Ajustado ligeramente */
+            font-size: 50px; 
             background: none; border: none; cursor: pointer; padding: 0; margin: 0;
         }
         .lang-label {
@@ -152,7 +150,7 @@
         <div id="btn-audio-login" onclick="toggleAudioLogin()">🔊</div>
 
         <div class="contenido-central">
-            <div style="margin-bottom: 15px;">
+            <div style="margin-bottom: 15px; margin-top: 60px;">
                 <p style="font-size: 10px; opacity: 0.6; letter-spacing: 4px; margin-bottom: 5px;">BARICHARA</p>
                 <h2 style="letter-spacing:3px; color: var(--naranja); font-size: 22px; margin: 0;">BÚSQUEDA DEL TESORO</h2>
                 <p style="font-size: 10px; opacity: 0.6; letter-spacing: 4px; margin-top: 5px;">MOT MOT EXPERIENCIAS</p>
