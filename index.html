@@ -38,15 +38,14 @@
             width: 100%;
             max-width: 500px;
             display: flex; flex-direction: column; align-items: center;
-            /* Flexibilidad para pantallas pequeñas */
             justify-content: center;
         }
 
         .video-bg { position: absolute; z-index: -1; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: brightness(0.7); }
 
-        /* ESTILOS BASE (Pantallas Normales) */
-        .titulo-principal { font-size: 24px; letter-spacing: 3px; color: var(--naranja); margin: 5px 0; }
-        .subtitulo { font-size: 11px; opacity: 0.6; letter-spacing: 4px; margin: 5px 0; }
+        /* ESTILOS BASE */
+        .titulo-principal { font-size: 24px; letter-spacing: 3px; color: var(--naranja); margin: 5px 0; text-transform: uppercase; }
+        .subtitulo { font-size: 11px; opacity: 0.8; letter-spacing: 4px; margin: 5px 0; text-transform: uppercase; }
         
         .btn-mot { 
             background: transparent; border: 2px solid var(--naranja); color: var(--naranja); 
@@ -72,18 +71,16 @@
         .flag-btn { font-size: 55px; background: none; border: none; cursor: pointer; padding: 0; margin: 0; }
         .lang-label { margin-top: 10px; font-size: 11px; letter-spacing: 2px; color: #fff; font-weight: bold; opacity: 0.8; }
 
-        /* --- MEDIA QUERIES (MAGIA RESPONSIVE) --- */
-        /* Esto se activa cuando la altura es poca (celular horizontal) */
+        /* RESPONSIVE (Landscape / Pantalla Pequeña) */
         @media (max-height: 500px) {
             .capa { padding-top: 10px; padding-bottom: 10px; justify-content: center; }
-            .titulo-principal { font-size: 18px; margin: 2px 0; } /* Título más pequeño */
+            .titulo-principal { font-size: 18px; margin: 2px 0; }
             .subtitulo { font-size: 9px; margin: 2px 0; }
-            .btn-mot { padding: 8px 20px; font-size: 12px; margin-top: 10px; min-width: 180px; } /* Botones compactos */
-            input { padding: 6px; margin: 5px 0; font-size: 14px; } /* Inputs compactos */
-            .flag-btn { font-size: 40px; } /* Banderas más pequeñas */
+            .btn-mot { padding: 8px 20px; font-size: 12px; margin-top: 10px; min-width: 180px; }
+            input { padding: 6px; margin: 5px 0; font-size: 14px; }
+            .flag-btn { font-size: 40px; }
             #paso-idioma { margin-top: 10px; gap: 30px; }
-            .modal-caja { padding: 15px; } /* Alerta más pequeña */
-            #btn-audio-login { width: 35px; height: 35px; font-size: 16px; top: 10px; right: 10px; } /* Botón audio ajustado */
+            #btn-audio-login { width: 35px; height: 35px; font-size: 16px; top: 10px; right: 10px; }
         }
 
         /* Utilidades */
@@ -136,9 +133,9 @@
 
         <div class="contenido-central">
             <div style="margin-bottom: 15px;">
-                <p class="subtitulo">BARICHARA</p>
-                <h2 class="titulo-principal">BÚSQUEDA DEL TESORO</h2>
-                <p class="subtitulo">MOT MOT EXPERIENCIAS</p>
+                <p id="txt-subtitulo-top" class="subtitulo">BARICHARA</p>
+                <h2 id="txt-titulo-main" class="titulo-principal">BÚSQUEDA DEL TESORO</h2>
+                <p id="txt-subtitulo-bot" class="subtitulo">TU AVENTURA COMIENZA</p>
             </div>
             
             <div id="paso-idioma">
@@ -176,17 +173,41 @@
 
         const TEXTOS = {
             es: {
-                ph_nombre: "Nombre de Explorador", ph_clave: "Clave de Misión", btn_entrar: "INICIAR AVENTURA",
-                btn_recuperar: "CONTINUAR MISIÓN", toggle_reingreso: "¿Ya tienes una misión en curso? Reingresar",
-                toggle_nuevo: "¿Explorador nuevo? Registrarse aquí", 
-                err_code: "CÓDIGO INVÁLIDO O AGOTADO", err_need_name: "NOMBRE DE EXPLORADOR REQUERIDO",
+                // Títulos Principales
+                titulo_main: "BÚSQUEDA DEL TESORO",
+                sub_top: "BARICHARA",
+                sub_bot: "TU AVENTURA COMIENZA",
+
+                // Botones y Formulario
+                ph_nombre: "Nombre de Explorador", 
+                ph_clave: "Clave de Misión", 
+                btn_entrar: "¡A JUGAR!",
+                btn_recuperar: "CONTINUAR JUEGO", 
+                
+                // Mensajes
+                toggle_reingreso: "¿Ya tienes partida? Reingresar",
+                toggle_nuevo: "¿Nuevo Explorador? Regístrate", 
+                err_code: "CÓDIGO INVÁLIDO O AGOTADO", 
+                err_need_name: "NOMBRE DE EXPLORADOR REQUERIDO",
                 msg_recuperando: "VERIFICANDO CREDENCIALES..."
             },
             en: {
-                ph_nombre: "Explorer Name", ph_clave: "Mission Key", btn_entrar: "START ADVENTURE",
-                btn_recuperar: "RESUME MISSION", toggle_reingreso: "Mission in progress? Resume here",
+                // Main Titles
+                titulo_main: "TREASURE HUNT",
+                sub_top: "BARICHARA",
+                sub_bot: "YOUR ADVENTURE BEGINS",
+
+                // Buttons & Form
+                ph_nombre: "Explorer Name", 
+                ph_clave: "Mission Key", 
+                btn_entrar: "LET'S PLAY!",
+                btn_recuperar: "RESUME GAME", 
+                
+                // Messages
+                toggle_reingreso: "Game in progress? Resume here",
                 toggle_nuevo: "New Explorer? Register here",
-                err_code: "INVALID OR EXPIRED CODE", err_need_name: "EXPLORER NAME REQUIRED",
+                err_code: "INVALID OR EXPIRED CODE", 
+                err_need_name: "EXPLORER NAME REQUIRED",
                 msg_recuperando: "VERIFYING CREDENTIALS..."
             }
         };
@@ -199,6 +220,8 @@
             intentarAudioAutomatico(); 
 
             if(localStorage.getItem('motmot_lang')) {
+                // Si ya había idioma, lo cargamos sin animación para que se vea directo
+                // Pero como es inicio, quizás mejor dejar que elija o usar setLanguage sin anim
                 idioma = localStorage.getItem('motmot_lang');
             }
             document.addEventListener("fullscreenchange", verificarEstadoPantalla);
@@ -286,9 +309,16 @@
             idioma = lang; localStorage.setItem('motmot_lang', lang);
             const t = TEXTOS[lang];
             
+            // ACTUALIZAR TÍTULOS Y SUBTÍTULOS
+            document.getElementById('txt-titulo-main').innerText = t.titulo_main;
+            document.getElementById('txt-subtitulo-top').innerText = t.sub_top;
+            document.getElementById('txt-subtitulo-bot').innerText = t.sub_bot;
+
+            // ACTUALIZAR FORMULARIO
             document.getElementById('reg-nombre').placeholder = t.ph_nombre;
             document.getElementById('reg-clave').placeholder = t.ph_clave;
             document.getElementById('btn-entrar').innerText = modoReingreso ? t.btn_recuperar : t.btn_entrar;
+            document.getElementById('toggle-modo').innerText = modoReingreso ? t.toggle_nuevo : t.toggle_reingreso;
             
             if(anim) {
                 document.getElementById('paso-idioma').style.display = 'none';
@@ -330,7 +360,7 @@
                     localStorage.setItem('motmot_pista', data.pista_actual || 1);
                     
                     if(!esRecarga && data.modo === "reingreso") {
-                        mostrarAlerta(`Bienvenido de nuevo Explorador ${data.nombre_jugador}`, "REGRESO");
+                        mostrarAlerta(`${data.nombre_jugador}`, "WELCOME BACK"); // Mensaje corto y directo
                     }
                     
                     console.log("Cerebro: Login OK. Esperando módulo Tablero...");
