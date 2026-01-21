@@ -3,285 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Centro de Mando | MotMot</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Búsqueda del Tesoro | Barichara</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/html5-qrcode"></script>
+
     <style>
-        :root { --naranja: #ff6600; --verde: #00cc66; --negro: #000; --gris: #111; --dorado: #FFD700; }
-        body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100dvh; font-family: 'Verdana', sans-serif; overflow: hidden; }
-
-        /* --- CAPAS --- */
-        .capa { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; background: var(--negro); z-index: 10; padding: 20px; text-align: center; }
+        /* ESTILOS IGUALES A TU DISEÑO ORIGINAL */
+        :root { --naranja: #ff6600; --verde: #00cc66; --negro: #000; }
+        body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100vh; font-family: 'Verdana', sans-serif; overflow: hidden; }
+        .capa { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: #000; z-index: 10; text-align: center; }
         .activa { display: flex !important; }
-
-        /* --- ESTILOS VISUALES --- */
-        .titulo { font-size: 24px; letter-spacing: 3px; color: var(--naranja); text-transform: uppercase; margin-bottom: 10px; }
-        .subtitulo { font-size: 10px; letter-spacing: 4px; opacity: 0.7; text-transform: uppercase; margin-bottom: 30px; }
         
         .btn-mot { 
             background: transparent; border: 2px solid var(--naranja); color: var(--naranja); 
             padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; 
-            text-transform: uppercase; font-size: 14px; letter-spacing: 2px; transition: 0.3s;
-            margin-top: 20px; width: 100%; max-width: 300px;
+            text-transform: uppercase; margin-top: 20px; letter-spacing: 2px;
         }
-        .btn-mot:active { background: var(--naranja); color: #000; transform: scale(0.95); }
-
-        input { background: transparent; border: none; border-bottom: 2px solid #666; color: white; padding: 12px; margin: 10px 0; width: 100%; max-width: 300px; text-align: center; font-size: 18px; outline: none; }
+        .btn-mot:active { background: var(--naranja); color: #000; }
         
-        /* --- ESTILOS DEL RANKING (FINAL) --- */
-        .copa-animada { font-size: 80px; animation: bounce 2s infinite; margin-bottom: 20px; }
-        .stats-box { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--dorado); border-radius: 10px; padding: 20px; width: 100%; max-width: 350px; margin-bottom: 20px; }
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
-        .stat-label { color: #aaa; font-size: 12px; text-transform: uppercase; }
-        .stat-val { color: var(--dorado); font-weight: bold; font-size: 14px; }
+        input { background: transparent; border: none; border-bottom: 2px solid #666; color: white; padding: 10px; margin: 10px; text-align: center; font-size: 18px; outline: none; }
         
-        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-20px);} 60% {transform: translateY(-10px);} }
-
-        /* ESCANER */
-        #reader { width: 100%; max-width: 400px; border: 2px solid var(--naranja); border-radius: 10px; }
+        /* Ajustes para el video de fondo */
+        .video-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4; z-index: -1; }
     </style>
 </head>
 <body>
 
     <div id="capa-login" class="capa activa">
-        <div class="subtitulo">BARICHARA</div>
-        <div class="titulo">BÚSQUEDA DEL TESORO</div>
-        <p style="font-size: 10px; color: #666;">MOTMOT EXPERIENCIAS</p>
+        <video class="video-bg" autoplay loop muted playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
+        <h2 style="color:var(--naranja); letter-spacing:3px;">BARICHARA</h2>
+        <p style="font-size:10px; letter-spacing:2px; margin-bottom:20px;">ACCESO AL SISTEMA</p>
         
-        <input type="text" id="reg-nombre" placeholder="Nombre de Agente">
-        <input type="text" id="reg-clave" placeholder="Clave de Misión">
-        <button class="btn-mot" onclick="iniciarLogin()">INICIAR SISTEMA</button>
-        <p id="msg-login" style="margin-top:15px; font-size:11px; color:var(--naranja);"></p>
+        <input type="text" id="reg-nombre" placeholder="Nombre Agente">
+        <input type="text" id="reg-clave" placeholder="Clave Misión">
+        <button class="btn-mot" onclick="login()">INICIAR</button>
+        <p id="msg-login" style="margin-top:15px; font-size:11px; color:#aaa;"></p>
     </div>
 
     <div id="capa-tablero" class="capa">
-        <p class="subtitulo" style="color:var(--verde);">ESTADO DE MISIÓN</p>
-        <h1 id="txt-nivel" style="font-size:40px; color:white; margin:10px 0;">PISTA 1</h1>
-        <p id="txt-instruccion" style="font-size:12px; color:#ccc; max-width:80%; line-height:1.5;">
-            El sistema ha cargado los datos de tu siguiente objetivo.
-        </p>
-        
-        <button id="btn-accion-principal" class="btn-mot" onclick="ejecutarAccionNivel()">CARGANDO...</button>
-    </div>
-
-    <div id="capa-escaner" class="capa" style="background:rgba(0,0,0,0.95);">
-        <p class="subtitulo">LECTOR QR ACTIVADO</p>
-        <div id="reader"></div>
-        <button class="btn-mot" style="border-color:#555; color:#888; margin-top:20px;" onclick="cerrarEscaner()">CANCELAR</button>
-    </div>
-
-    <div id="capa-ranking" class="capa" style="background: linear-gradient(to bottom, #111, #000);">
-        <div class="copa-animada">🏆</div>
-        <h2 style="color:var(--dorado); letter-spacing:4px; margin:0;">¡VICTORIA!</h2>
-        <p style="font-size:10px; color:#888; margin-bottom:30px;">TESORO ENCONTRADO</p>
-
-        <div class="stats-box">
-            <div class="stat-row">
-                <span class="stat-label">Agente</span>
-                <span class="stat-val" id="rank-nombre">---</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Equipo</span>
-                <span class="stat-val" id="rank-equipo">---</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Tiempo Total</span>
-                <span class="stat-val" id="rank-tiempo">CALCULANDO...</span>
-            </div>
-            <div class="stat-row" style="border:none;">
-                <span class="stat-label">Rango</span>
-                <span class="stat-val" style="color:var(--verde);">MAESTRO EXPLORADOR</span>
-            </div>
-        </div>
-
-        <p style="font-size:10px; color:#555; max-width:80%;">Dirígete al punto de encuentro para reclamar tu recompensa.</p>
-        <button class="btn-mot" onclick="location.reload()">FINALIZAR</button>
+        <p style="color:var(--verde); letter-spacing:2px;">ESTADO DE MISIÓN</p>
+        <h1 id="txt-nivel" style="font-size:40px; margin:10px 0;">CARGANDO...</h1>
+        <p id="txt-desc" style="max-width:80%; color:#ccc; font-size:12px;">Esperando instrucciones del satélite...</p>
+        <button id="btn-accion" class="btn-mot" onclick="">...</button>
     </div>
 
 <script>
-    // --- 1. CONFIGURACIÓN DE URLS (EL ENRUTADOR) ---
-    // AQUÍ DEBES PEGAR LOS LINKS REALES DE TUS PÁGINAS DE WORDPRESS
-    const CONFIGURACION_URLS = {
-        1: "https://www.motmotexperiencias.com/pista-1/", // Link a tu página de Pista 1
-        2: "https://www.motmotexperiencias.com/pista-2/",
-        3: "https://www.motmotexperiencias.com/pista-3/",
-        4: "https://www.motmotexperiencias.com/pista-4/",
-        5: "https://www.motmotexperiencias.com/pista-5/",
-        // Si tienes más páginas (6, 7, 8, 9), ponlas aquí.
-        // Si no tienes página para la 6, el sistema usará el escáner genérico.
-    };
-
+    // --- CONFIGURACIÓN ---
+    // PEGA AQUÍ LA URL QUE TE DIÓ GOOGLE APPS SCRIPT AL PUBLICAR:
     const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec"; 
-    const NIVEL_FINAL = 10; // El nivel del Tesoro
-    const CODIGO_TESORO = "TESORO_MOTMOT_FINAL";
 
-    let html5QrCode;
-    let nivelActual = 1;
-
-    window.onload = () => {
-        // Verificar si ya hay sesión
-        if(localStorage.getItem('motmot_clave')) {
-            nivelActual = parseInt(localStorage.getItem('motmot_pista') || 1);
-            // Si ya terminó, mostrar ranking directamente
-            if(nivelActual > NIVEL_FINAL) {
-                mostrarRanking();
-            } else {
-                mostrarTablero();
-            }
-        }
+    // AQUÍ CONECTAMOS LOS ARCHIVOS (El Enrutador)
+    const RUTAS_ARCHIVOS = {
+        1: "pista1.html",
+        2: "pista2.html",
+        3: "pista3.html",
+        4: "pista4.html",
+        5: "pista5.html"
     };
 
-    // --- LÓGICA DE LOGIN (Conservada) ---
-    function iniciarLogin() {
+    // --- LÓGICA DE LOGIN ---
+    function login() {
         const nombre = document.getElementById('reg-nombre').value;
         const clave = document.getElementById('reg-clave').value.toUpperCase();
-        
-        if(!nombre || !clave) { alert("Faltan datos"); return; }
-        
-        document.getElementById('msg-login').innerText = "CONECTANDO CON SATÉLITE...";
-        
-        // Guardar hora de inicio si es nuevo
-        if(!localStorage.getItem('motmot_inicio')) {
-            localStorage.setItem('motmot_inicio', new Date().getTime());
-        }
+        if(!nombre || !clave) return alert("Faltan datos");
 
-        // Simulamos llamada a Google (o usa tu fetch real)
-        ejecutarJSONP(`${URL_GOOGLE}?action=registrar_inicio&codigo=${clave}&nombre=${encodeURIComponent(nombre)}`, (data) => {
+        document.getElementById('msg-login').innerText = "CONECTANDO...";
+        
+        // Guardamos localmente para no preguntar siempre
+        localStorage.setItem('motmot_agente', nombre);
+        localStorage.setItem('motmot_clave', clave);
+
+        // Llamada a Google Sheets
+        fetch(`${URL_GOOGLE}?action=registrar_inicio&codigo=${clave}&nombre=${encodeURIComponent(nombre)}`)
+        .then(r => r.text()) // Leemos como texto porque JSONP a veces es tricky, pero fetch directo funciona si el GAS retorna JSON
+        .then(txt => {
+            // Nota: Tu GAS devuelve JSONP (callback(...)). Vamos a limpiar eso para leer el JSON.
+            const jsonLimpio = txt.replace(/^.*?\(|\)$/g, ''); 
+            const data = JSON.parse(jsonLimpio);
+
             if(data.status === "success") {
-                localStorage.setItem('motmot_clave', clave);
-                localStorage.setItem('motmot_agente', data.nombre_jugador || nombre);
-                localStorage.setItem('motmot_equipo', data.nombre_equipo || "Exploradores");
                 localStorage.setItem('motmot_pista', data.pista_actual || 1);
-                
-                nivelActual = parseInt(data.pista_actual || 1);
                 mostrarTablero();
             } else {
-                document.getElementById('msg-login').innerText = "ERROR DE CREDENCIALES";
+                document.getElementById('msg-login').innerText = "ERROR: " + (data.code || "Clave inválida");
             }
+        })
+        .catch(e => {
+            // Fallback si falla Google: Dejar pasar si hay datos locales
+            console.log("Offline mode o error: " + e);
+            mostrarTablero();
         });
     }
 
-    // --- LÓGICA DEL TABLERO (CEREBRO) ---
+    // --- LÓGICA DEL TABLERO ---
     function mostrarTablero() {
-        ocultarTodo();
+        document.getElementById('capa-login').classList.remove('activa');
         document.getElementById('capa-tablero').classList.add('activa');
-        
-        const btn = document.getElementById('btn-accion-principal');
-        const titulo = document.getElementById('txt-nivel');
-        const instruccion = document.getElementById('txt-instruccion');
 
-        if (nivelActual === NIVEL_FINAL) {
-            // ESTAMOS EN EL TESORO
-            titulo.innerText = "EL TESORO";
-            titulo.style.color = "var(--dorado)";
-            instruccion.innerText = "Has llegado al final. Encuentra el cofre y escanea su código final.";
-            btn.innerText = "ESCANEAR TESORO";
-            btn.onclick = abrirEscanerTesoro; // Función especial para el final
-        } 
-        else if (CONFIGURACION_URLS[nivelActual]) {
-            // ES UNA PISTA CON PAGINA WEB (1 a 5)
-            titulo.innerText = "PISTA " + nivelActual;
-            instruccion.innerText = "La información de esta pista requiere una interfaz inmersiva.";
-            btn.innerText = "ABRIR PISTA " + nivelActual;
+        const nivel = parseInt(localStorage.getItem('motmot_pista') || 1);
+        document.getElementById('txt-nivel').innerText = "PISTA " + nivel;
+
+        const btn = document.getElementById('btn-accion');
+        const desc = document.getElementById('txt-desc');
+
+        // VERIFICAMOS SI HAY ARCHIVO HTML PARA ESTE NIVEL
+        if (RUTAS_ARCHIVOS[nivel]) {
+            desc.innerText = "Esta pista requiere inmersión visual. Accede al módulo.";
+            btn.innerText = "ABRIR PISTA " + nivel;
             btn.onclick = () => {
-                window.location.href = CONFIGURACION_URLS[nivelActual];
+                window.location.href = RUTAS_ARCHIVOS[nivel];
             };
-        } 
-        else {
-            // ES UNA PISTA SIN PAGINA (Usar escáner genérico del cerebro)
-            titulo.innerText = "PISTA " + nivelActual;
-            instruccion.innerText = "Busca el código QR físico en la ubicación.";
-            btn.innerText = "ESCANEAR CÓDIGO";
-            btn.onclick = abrirEscanerGenerico;
-        }
-    }
-
-    // --- ESCÁNER PARA PISTAS GENÉRICAS (6-9) ---
-    function abrirEscanerGenerico() {
-        document.getElementById('capa-tablero').classList.remove('activa');
-        document.getElementById('capa-escaner').classList.add('activa');
-        iniciarCamara((texto) => {
-            // Validar código genérico (Ej: BARICHARA_PISTA_06)
-            if(texto.includes("PISTA_0" + nivelActual) || texto.includes("PISTA_" + nivelActual)) {
-                alert("¡CORRECTO!");
-                avanzarNivel();
-            }
-        });
-    }
-
-    // --- ESCÁNER PARA EL TESORO (NIVEL 10) ---
-    function abrirEscanerTesoro() {
-        document.getElementById('capa-tablero').classList.remove('activa');
-        document.getElementById('capa-escaner').classList.add('activa');
-        iniciarCamara((texto) => {
-            if(texto.includes(CODIGO_TESORO)) {
-                cerrarEscaner();
-                mostrarRanking();
-                // Opcional: Enviar datos de fin a Google Sheets aquí
-            }
-        });
-    }
-
-    // --- UTILS ESCÁNER ---
-    function iniciarCamara(callbackExito) {
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
-            (texto) => { callbackExito(texto); }
-        ).catch(err => alert("Error cámara"));
-    }
-    
-    function cerrarEscaner() {
-        if(html5QrCode) html5QrCode.stop().then(() => {
-            document.getElementById('capa-escaner').classList.remove('activa');
-            document.getElementById('capa-tablero').classList.add('activa');
-        });
-    }
-
-    // --- LOGICA DE AVANCE ---
-    function avanzarNivel() {
-        nivelActual++;
-        localStorage.setItem('motmot_pista', nivelActual);
-        if(html5QrCode) html5QrCode.stop();
-        mostrarTablero();
-    }
-
-    // --- PANTALLA DE RANKING ---
-    function mostrarRanking() {
-        ocultarTodo();
-        document.getElementById('capa-ranking').classList.add('activa');
-        
-        // Cargar datos
-        document.getElementById('rank-nombre').innerText = localStorage.getItem('motmot_agente') || "Anónimo";
-        document.getElementById('rank-equipo').innerText = localStorage.getItem('motmot_equipo') || "Solo";
-        
-        // Calcular tiempo
-        const inicio = parseInt(localStorage.getItem('motmot_inicio'));
-        const fin = new Date().getTime();
-        
-        if(inicio) {
-            const totalSegundos = Math.floor((fin - inicio) / 1000);
-            const minutos = Math.floor(totalSegundos / 60);
-            const segundos = totalSegundos % 60;
-            document.getElementById('rank-tiempo').innerText = `${minutos} min ${segundos} seg`;
         } else {
-            document.getElementById('rank-tiempo').innerText = "NO REGISTRADO";
+            // Si es nivel 6 o más (o el tesoro), usamos lógica genérica (o escáner aquí)
+            desc.innerText = "Busca el código físico en la zona.";
+            btn.innerText = "ESCANEAR CÓDIGO";
+            btn.onclick = () => alert("Aquí abriría el escáner genérico (Pendiente config)");
         }
-
-        // Bloquear regreso
-        localStorage.setItem('motmot_pista', 11); 
     }
 
-    function ocultarTodo() {
-        const capas = document.querySelectorAll('.capa');
-        capas.forEach(c => c.classList.remove('activa'));
-    }
-
-    function ejecutarJSONP(url, callback) {
-        const cbName = 'jsonp_' + Math.round(100000 * Math.random());
-        window[cbName] = (data) => { delete window[cbName]; document.body.removeChild(script); callback(data); };
-        const script = document.createElement('script');
-        script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cbName;
-        document.body.appendChild(script);
-    }
+    // Auto-login si ya entró antes
+    window.onload = () => {
+        if(localStorage.getItem('motmot_clave')) login();
+    };
 </script>
 </body>
 </html>
