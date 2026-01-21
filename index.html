@@ -29,7 +29,7 @@
             padding-left: max(20px, env(safe-area-inset-left)); 
             padding-right: max(20px, env(safe-area-inset-right));
             text-align: center; z-index: 10; background: var(--negro); 
-            overflow-y: auto; /* Permite scroll si la pantalla es muy pequeña */
+            overflow-y: auto; 
         }
         .activa { display: flex !important; }
         
@@ -71,6 +71,10 @@
         .flag-btn { font-size: 55px; background: none; border: none; cursor: pointer; padding: 0; margin: 0; }
         .lang-label { margin-top: 10px; font-size: 11px; letter-spacing: 2px; color: #fff; font-weight: bold; opacity: 0.8; }
 
+        /* Estilos del Escáner QR */
+        #reader { width: 100%; max-width: 500px; border-radius: 10px; overflow: hidden; margin-bottom: 20px; border: 2px solid var(--naranja); }
+        .indicador-pista { font-size: 18px; color: var(--verde); margin-bottom: 30px; letter-spacing: 2px; font-weight: bold; }
+
         /* RESPONSIVE (Landscape / Pantalla Pequeña) */
         @media (max-height: 500px) {
             .capa { padding-top: 10px; padding-bottom: 10px; justify-content: center; }
@@ -81,6 +85,7 @@
             .flag-btn { font-size: 40px; }
             #paso-idioma { margin-top: 10px; gap: 30px; }
             #btn-audio-login { width: 35px; height: 35px; font-size: 16px; top: 10px; right: 10px; }
+            #reader { height: 200px; width: 200px; margin: 0 auto; } /* Escáner más pequeño en horizontal */
         }
 
         /* Utilidades */
@@ -168,136 +173,128 @@
         <p id="aviso-login" style="margin-top:15px; font-size:12px; color:var(--naranja); font-weight:bold;"></p>
     </div>
 
+    <div id="capa-tablero" class="capa">
+        <div class="contenido-central">
+            <p class="subtitulo" style="color:var(--verde);">ESTADO DE MISIÓN</p>
+            <h2 id="txt-pista-actual" class="indicador-pista" style="font-size: 30px; margin: 20px 0;">PISTA 1</h2>
+            
+            <p id="txt-desc-tablero" style="font-size: 13px; opacity: 0.8; margin-bottom: 30px; max-width: 80%;">
+                Busca el código QR oculto en la ubicación indicada.
+            </p>
+
+            <button id="btn-escanear" class="btn-mot" onclick="abrirEscaner()">ESCANEAR CÓDIGO</button>
+        </div>
+    </div>
+
+    <div id="capa-escaner" class="capa" style="background: rgba(0,0,0,0.95);">
+        <h3 style="color:var(--naranja); letter-spacing: 2px; margin-bottom: 20px;">ESCANEAR QR</h3>
+        <div id="reader"></div>
+        <button class="btn-mot" onclick="cerrarEscaner()" style="border-color:#555; color:#aaa; margin-top: 20px;">CANCELAR</button>
+    </div>
+
     <script>
         const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec"; 
 
+        // --- CONFIGURACIÓN DE PISTAS ---
+        // Definimos los códigos esperados para cada nivel (1 al 10)
+        const CODIGOS_PISTAS = {
+            1: "BARICHARA_PISTA_01",
+            2: "BARICHARA_PISTA_02",
+            3: "BARICHARA_PISTA_03",
+            4: "BARICHARA_PISTA_04",
+            5: "BARICHARA_PISTA_05",
+            6: "BARICHARA_PISTA_06",
+            7: "BARICHARA_PISTA_07",
+            8: "BARICHARA_PISTA_08",
+            9: "BARICHARA_PISTA_09",
+            10: "TESORO_MOTMOT_FINAL" // El nivel 10 es el tesoro
+        };
+
         const TEXTOS = {
             es: {
-                // Títulos Principales
-                titulo_main: "BÚSQUEDA DEL TESORO",
-                sub_top: "BARICHARA",
-                sub_bot: "TU AVENTURA COMIENZA",
-
-                // Botones y Formulario
-                ph_nombre: "Nombre de Explorador", 
-                ph_clave: "Clave de Misión", 
-                btn_entrar: "¡A JUGAR!",
-                btn_recuperar: "CONTINUAR JUEGO", 
-                
-                // Mensajes
-                toggle_reingreso: "¿Ya tienes partida? Reingresar",
-                toggle_nuevo: "¿Nuevo Explorador? Regístrate", 
-                err_code: "CÓDIGO INVÁLIDO O AGOTADO", 
-                err_need_name: "NOMBRE DE EXPLORADOR REQUERIDO",
-                msg_recuperando: "VERIFICANDO CREDENCIALES..."
+                titulo_main: "BÚSQUEDA DEL TESORO", sub_top: "BARICHARA", sub_bot: "TU AVENTURA COMIENZA",
+                ph_nombre: "Nombre de Explorador", ph_clave: "Clave de Misión", 
+                btn_entrar: "¡A JUGAR!", btn_recuperar: "CONTINUAR JUEGO", 
+                toggle_reingreso: "¿Ya tienes partida? Reingresar", toggle_nuevo: "¿Nuevo Explorador? Regístrate", 
+                err_code: "CÓDIGO INVÁLIDO O AGOTADO", err_need_name: "NOMBRE DE EXPLORADOR REQUERIDO",
+                msg_recuperando: "VERIFICANDO CREDENCIALES...",
+                // Textos Tablero
+                lbl_estado: "ESTADO DE MISIÓN",
+                lbl_pista: "BUSCANDO PISTA",
+                lbl_tesoro: "BUSCANDO EL TESORO",
+                btn_scan: "ESCANEAR CÓDIGO",
+                desc_tablero: "Encuentra el código QR en la ubicación para avanzar.",
+                alerta_incorrecto: "CÓDIGO INCORRECTO. Ésta no es la pista que buscas."
             },
             en: {
-                // Main Titles
-                titulo_main: "TREASURE HUNT",
-                sub_top: "BARICHARA",
-                sub_bot: "YOUR ADVENTURE BEGINS",
-
-                // Buttons & Form
-                ph_nombre: "Explorer Name", 
-                ph_clave: "Mission Key", 
-                btn_entrar: "LET'S PLAY!",
-                btn_recuperar: "RESUME GAME", 
-                
-                // Messages
-                toggle_reingreso: "Game in progress? Resume here",
-                toggle_nuevo: "New Explorer? Register here",
-                err_code: "INVALID OR EXPIRED CODE", 
-                err_need_name: "EXPLORER NAME REQUIRED",
-                msg_recuperando: "VERIFYING CREDENTIALS..."
+                titulo_main: "TREASURE HUNT", sub_top: "BARICHARA", sub_bot: "YOUR ADVENTURE BEGINS",
+                ph_nombre: "Explorer Name", ph_clave: "Mission Key", 
+                btn_entrar: "LET'S PLAY!", btn_recuperar: "RESUME GAME", 
+                toggle_reingreso: "Game in progress? Resume here", toggle_nuevo: "New Explorer? Register here",
+                err_code: "INVALID OR EXPIRED CODE", err_need_name: "EXPLORER NAME REQUIRED",
+                msg_recuperando: "VERIFYING CREDENTIALS...",
+                // Dashboard Texts
+                lbl_estado: "MISSION STATUS",
+                lbl_pista: "SEARCHING CLUE",
+                lbl_tesoro: "SEARCHING TREASURE",
+                btn_scan: "SCAN CODE",
+                desc_tablero: "Find the QR code at the location to proceed.",
+                alerta_incorrecto: "WRONG CODE. This is not the clue you are looking for."
             }
         };
 
         let idioma = 'es';
         let modoReingreso = false;
+        let html5QrcodeScanner = null; // Variable para el escáner
 
         window.onload = () => {
             verificarEstadoPantalla();
             intentarAudioAutomatico(); 
-
             if(localStorage.getItem('motmot_lang')) {
-                // Si ya había idioma, lo cargamos sin animación para que se vea directo
-                // Pero como es inicio, quizás mejor dejar que elija o usar setLanguage sin anim
                 idioma = localStorage.getItem('motmot_lang');
             }
+            // Si ya hay sesión activa, podríamos intentar ir al tablero directo (opcional)
+            // if(localStorage.getItem('motmot_clave')) irATablero();
+            
             document.addEventListener("fullscreenchange", verificarEstadoPantalla);
             document.addEventListener("webkitfullscreenchange", verificarEstadoPantalla);
             window.addEventListener("resize", verificarEstadoPantalla);
         };
 
+        // --- FUNCIONES DE AUDIO Y PANTALLA (Igual que antes) ---
         function intentarAudioAutomatico() {
             const vid = document.getElementById('vid-login');
             const btn = document.getElementById('btn-audio-login');
-            
             vid.muted = false;
             let promise = vid.play();
-            
             if (promise !== undefined) {
-                promise.then(_ => {
-                    btn.innerText = "🔊";
-                }).catch(error => {
-                    console.log("Autoplay con sonido bloqueado. Iniciando en Mute.");
-                    vid.muted = true;
-                    vid.play();
-                    btn.innerText = "🔇";
+                promise.then(_ => { btn.innerText = "🔊"; }).catch(error => {
+                    vid.muted = true; vid.play(); btn.innerText = "🔇";
                 });
             }
         }
-
         function toggleAudioLogin() {
             const vid = document.getElementById('vid-login');
             const btn = document.getElementById('btn-audio-login');
-            
-            if (vid.muted) {
-                vid.muted = false;
-                btn.innerText = "🔊"; 
-            } else {
-                vid.muted = true;
-                btn.innerText = "🔇"; 
-            }
+            if (vid.muted) { vid.muted = false; btn.innerText = "🔊"; } else { vid.muted = true; btn.innerText = "🔇"; }
         }
-
         function activarModoInmersivo() {
             let elem = document.documentElement;
             const vid = document.getElementById('vid-login');
             if(vid.muted) { vid.muted = false; document.getElementById('btn-audio-login').innerText = "🔊"; }
-
             let p;
             if (elem.requestFullscreen) p = elem.requestFullscreen();
             else if (elem.webkitRequestFullscreen) p = elem.webkitRequestFullscreen();
-            
-            if(p) {
-                p.then(() => {
-                    document.getElementById('capa-fullscreen-request').style.display = 'none';
-                }).catch(err => {
-                    document.getElementById('capa-fullscreen-request').style.display = 'none';
-                });
-            } else {
-                document.getElementById('capa-fullscreen-request').style.display = 'none';
-            }
+            if(p) { p.then(() => { document.getElementById('capa-fullscreen-request').style.display = 'none'; }).catch(err => { document.getElementById('capa-fullscreen-request').style.display = 'none'; }); } 
+            else { document.getElementById('capa-fullscreen-request').style.display = 'none'; }
         }
-
-        function toggleFullScreen() {
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) activarModoInmersivo();
-            else if (document.exitFullscreen) document.exitFullscreen();
-        }
-
+        function toggleFullScreen() { if (!document.fullscreenElement && !document.webkitFullscreenElement) activarModoInmersivo(); else if (document.exitFullscreen) document.exitFullscreen(); }
         function verificarEstadoPantalla() {
             const isFullScreen = document.fullscreenElement || document.webkitFullscreenElement;
             const isPortrait = window.innerHeight > window.innerWidth;
             const capaPausa = document.getElementById('capa-fullscreen-request');
-
-            if (!isPortrait && !isFullScreen) {
-                capaPausa.style.display = 'flex';
-            } else {
-                capaPausa.style.display = 'none';
-            }
+            if (!isPortrait && !isFullScreen) { capaPausa.style.display = 'flex'; } else { capaPausa.style.display = 'none'; }
         }
-
         function mostrarAlerta(texto, titulo="AVISO") {
             document.getElementById('alerta-titulo').innerText = titulo;
             document.getElementById('alerta-texto').innerText = texto;
@@ -305,46 +302,42 @@
         }
         function cerrarAlerta() { document.getElementById('capa-alerta').style.display = 'none'; }
 
+        // --- IDIOMA ---
         function setLanguage(lang, anim=true) {
             idioma = lang; localStorage.setItem('motmot_lang', lang);
             const t = TEXTOS[lang];
             
-            // ACTUALIZAR TÍTULOS Y SUBTÍTULOS
             document.getElementById('txt-titulo-main').innerText = t.titulo_main;
             document.getElementById('txt-subtitulo-top').innerText = t.sub_top;
             document.getElementById('txt-subtitulo-bot').innerText = t.sub_bot;
-
-            // ACTUALIZAR FORMULARIO
             document.getElementById('reg-nombre').placeholder = t.ph_nombre;
             document.getElementById('reg-clave').placeholder = t.ph_clave;
             document.getElementById('btn-entrar').innerText = modoReingreso ? t.btn_recuperar : t.btn_entrar;
             document.getElementById('toggle-modo').innerText = modoReingreso ? t.toggle_nuevo : t.toggle_reingreso;
             
+            // Textos nuevos del tablero
+            document.getElementById('btn-escanear').innerText = t.btn_scan;
+            document.getElementById('txt-desc-tablero').innerText = t.desc_tablero;
+            actualizarTextoPista(); // Actualiza el texto de "Pista X" según idioma
+
             if(anim) {
                 document.getElementById('paso-idioma').style.display = 'none';
                 document.getElementById('paso-form').style.display = 'flex';
             }
         }
-
-        function resetIdioma() {
-            document.getElementById('paso-form').style.display = 'none';
-            document.getElementById('paso-idioma').style.display = 'flex';
-        }
-
+        function resetIdioma() { document.getElementById('paso-form').style.display = 'none'; document.getElementById('paso-idioma').style.display = 'flex'; }
         function alternarModoLogin() {
-            modoReingreso = !modoReingreso;
-            const t = TEXTOS[idioma];
+            modoReingreso = !modoReingreso; const t = TEXTOS[idioma];
             document.getElementById('reg-nombre').className = modoReingreso ? 'oculto' : '';
             document.getElementById('btn-entrar').innerText = modoReingreso ? t.btn_recuperar : t.btn_entrar;
             document.getElementById('toggle-modo').innerText = modoReingreso ? t.toggle_nuevo : t.toggle_reingreso;
         }
 
+        // --- LOGIN Y FLUJO ---
         function iniciarMision(esRecarga = false) {
             activarModoInmersivo();
-
             let nom = document.getElementById('reg-nombre').value.trim();
             const cla = esRecarga ? localStorage.getItem('motmot_clave') : document.getElementById('reg-clave').value.toUpperCase().trim();
-            
             if (esRecarga) nom = localStorage.getItem('motmot_agente');
             
             if (!esRecarga && !modoReingreso && !nom) { mostrarAlerta(TEXTOS[idioma].err_need_name); return; }
@@ -360,17 +353,113 @@
                     localStorage.setItem('motmot_pista', data.pista_actual || 1);
                     
                     if(!esRecarga && data.modo === "reingreso") {
-                        mostrarAlerta(`${data.nombre_jugador}`, "WELCOME BACK"); // Mensaje corto y directo
+                        mostrarAlerta(`${data.nombre_jugador}`, "WELCOME BACK");
                     }
-                    
-                    console.log("Cerebro: Login OK. Esperando módulo Tablero...");
-                    // irATablero(); 
+                    console.log("Cerebro: Login OK. Pasando a Tablero.");
+                    irATablero(); // AHORA SÍ CONECTAMOS
                 } else if(!esRecarga) {
                     if (data.code === "ERR_NEED_NAME") mostrarAlerta(TEXTOS[idioma].err_need_name);
                     else if (data.code === "ERR_USED") mostrarAlerta(TEXTOS[idioma].err_code, "ERROR");
                     else document.getElementById('aviso-login').innerText = TEXTOS[idioma].err_code;
                 }
             });
+        }
+
+        // --- NUEVO: LÓGICA DE TABLERO Y PISTAS ---
+        function irATablero() {
+            // Ocultar login, mostrar tablero
+            document.getElementById('capa-login').classList.remove('activa');
+            document.getElementById('capa-tablero').classList.add('activa');
+            actualizarTextoPista();
+        }
+
+        function actualizarTextoPista() {
+            const pista = parseInt(localStorage.getItem('motmot_pista') || 1);
+            const t = TEXTOS[idioma];
+            
+            if (pista === 10) {
+                document.getElementById('txt-pista-actual').innerText = t.lbl_tesoro;
+                document.getElementById('txt-pista-actual').style.color = "gold";
+            } else {
+                document.getElementById('txt-pista-actual').innerText = `${t.lbl_pista} ${pista}`;
+                document.getElementById('txt-pista-actual').style.color = "var(--naranja)";
+            }
+        }
+
+        // --- NUEVO: LÓGICA DEL ESCÁNER ---
+        function abrirEscaner() {
+            document.getElementById('capa-tablero').classList.remove('activa');
+            document.getElementById('capa-escaner').classList.add('activa');
+
+            // Iniciar html5-qrcode
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+            .catch(err => {
+                console.error("Error iniciando cámara", err);
+                mostrarAlerta("Error al acceder a la cámara. Permite el acceso.", "ERROR CÁMARA");
+                cerrarEscaner();
+            });
+        }
+
+        function cerrarEscaner() {
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner.clear();
+                    document.getElementById('capa-escaner').classList.remove('activa');
+                    document.getElementById('capa-tablero').classList.add('activa');
+                }).catch(err => console.log("Error stop scanner", err));
+            } else {
+                document.getElementById('capa-escaner').classList.remove('activa');
+                document.getElementById('capa-tablero').classList.add('activa');
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Detener escáner inmediatamente para evitar lecturas múltiples
+            html5QrcodeScanner.stop().then(() => {
+                html5QrcodeScanner.clear();
+                document.getElementById('capa-escaner').classList.remove('activa');
+                validarCodigoEscaneado(decodedText);
+            }).catch(err => console.log("Error stop", err));
+        }
+
+        function onScanFailure(error) {
+            // No hacer nada, sigue escaneando
+        }
+
+        function validarCodigoEscaneado(codigo) {
+            const pistaActual = parseInt(localStorage.getItem('motmot_pista') || 1);
+            const codigoEsperado = CODIGOS_PISTAS[pistaActual];
+
+            console.log(`Escaneado: ${codigo} | Esperado: ${codigoEsperado}`);
+
+            if (codigo === codigoEsperado) {
+                // ¡CÓDIGO CORRECTO!
+                mostrarAlerta("¡PISTA ENCONTRADA!", "EXCELENTE");
+                
+                // Avanzar nivel
+                const nuevaPista = pistaActual + 1;
+                localStorage.setItem('motmot_pista', nuevaPista);
+
+                // Aquí deberíamos guardar en Google Sheets que avanzó (Pendiente para el siguiente paso)
+                // updateProgreso(nuevaPista);
+
+                if (nuevaPista > 10) {
+                    // GANÓ EL JUEGO
+                    mostrarAlerta("¡HAS ENCONTRADO EL TESORO!", "¡VICTORIA!");
+                    // Redirigir a pantalla final...
+                } else {
+                    // Volver al tablero con la nueva pista
+                    irATablero();
+                }
+
+            } else {
+                // CÓDIGO INCORRECTO
+                mostrarAlerta(TEXTOS[idioma].alerta_incorrecto, "ERROR");
+                irATablero(); // Regresa al tablero
+            }
         }
 
         function ejecutarJSONP(url, callback) {
