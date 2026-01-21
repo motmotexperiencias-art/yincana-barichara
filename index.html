@@ -16,7 +16,6 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
-        /* --- ESTILOS VISUALES (EL DISEÑO) --- */
         :root { --naranja: #ff6600; --verde: #00cc66; --negro: #000; --gris: #111; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
@@ -27,7 +26,7 @@
         .activa { display: flex !important; }
         .video-bg { position: absolute; z-index: -1; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: brightness(0.7); }
 
-        /* Botones Minimalistas */
+        /* Botones */
         .btn-mot { 
             background: transparent; border: 2px solid var(--naranja); color: var(--naranja); 
             padding: 14px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; 
@@ -36,7 +35,7 @@
         }
         .btn-mot:active { background: var(--naranja); color: #000; transform: scale(0.95); }
 
-        /* Inputs (Formulario) */
+        /* Inputs */
         input { 
             background: transparent; border: none; border-bottom: 2px solid #666; 
             color: white; padding: 12px; margin: 15px 0; width: 100%; max-width: 260px; 
@@ -44,18 +43,21 @@
         }
         input:focus { border-bottom-color: var(--naranja); transform: scale(1.05); }
 
-        /* Control de Pantalla (Rotación y Fullscreen) */
+        /* CAPA ROTACIÓN (Vertical) */
         #capa-rotar { position: fixed; inset: 0; background: #000; z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
         #icono-rotar { font-size: 60px; animation: girar 2s infinite; margin-bottom: 20px; }
         @keyframes girar { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+        /* Solo se muestra si es portrait (vertical) */
         @media (orientation: portrait) { #capa-rotar { display: flex !important; } }
 
+        /* CAPA PAUSA (Horizontal pero sin Fullscreen) */
         #capa-fullscreen-request {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 99990;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 99990;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; backdrop-filter: blur(8px);
+            text-align: center; backdrop-filter: blur(10px);
         }
         
+        /* Botón discreto en esquina */
         #btn-toggle-fs {
             position: fixed; top: 15px; left: 15px; z-index: 999999;
             background: rgba(0,0,0,0.3); border: 1px solid #555;
@@ -63,7 +65,7 @@
             font-size: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
         }
 
-        /* Alertas Personalizadas */
+        /* Alertas Modal */
         #capa-alerta { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200000; display: none; align-items: center; justify-content: center; }
         .modal-caja { background: #111; border: 2px solid var(--naranja); border-radius: 15px; padding: 30px; max-width: 85%; width: 320px; text-align: center; box-shadow: 0 0 30px rgba(255, 102, 0, 0.2); }
         .modal-titulo { color: var(--naranja); font-size: 18px; font-weight: bold; margin-bottom: 15px; letter-spacing: 2px;}
@@ -73,7 +75,6 @@
         .flag-btn { font-size: 45px; background: none; border: none; cursor: pointer; margin: 0 15px; transition: transform 0.2s; }
         .flag-btn:active { transform: scale(1.2); }
 
-        /* Utilidades Ocultas */
         .oculto { display: none !important; }
     </style>
 </head>
@@ -82,7 +83,7 @@
     <div id="capa-alerta">
         <div class="modal-caja">
             <div id="alerta-titulo" class="modal-titulo">AVISO</div>
-            <div id="alerta-texto" class="modal-texto">Mensaje del sistema...</div>
+            <div id="alerta-texto" class="modal-texto">Mensaje...</div>
             <button class="btn-mot" onclick="cerrarAlerta()" style="padding: 10px 20px; margin-top: 0; font-size: 12px; border-color: #555; color: #fff;">ENTENDIDO</button>
         </div>
     </div>
@@ -92,13 +93,14 @@
     <div id="capa-rotar">
         <div id="icono-rotar">📱</div>
         <h3>GIRA TU DISPOSITIVO</h3>
-        <p style="opacity: 0.7; font-size: 13px; margin-top: 10px;">Experiencia diseñada en horizontal</p>
+        <p style="opacity: 0.7; font-size: 13px; margin-top: 10px; margin-bottom: 20px;">Pon el celular en horizontal para jugar.</p>
+        <button class="btn-mot" onclick="activarModoInmersivo()">INICIAR / START</button>
     </div>
 
-    <div id="capa-fullscreen-request">
-        <h2 style="color:var(--naranja); letter-spacing: 5px; margin-bottom: 20px;">PAUSA</h2>
-        <p style="margin-bottom: 30px; font-size: 13px; opacity: 0.8;">Toca para continuar la aventura en pantalla completa.</p>
-        <button class="btn-mot" onclick="activarModoInmersivo()">CONTINUAR JUEGO</button>
+    <div id="capa-fullscreen-request" style="display:none;">
+        <h2 style="color:var(--naranja); letter-spacing: 5px; margin-bottom: 20px;">JUEGO PAUSADO</h2>
+        <p style="margin-bottom: 30px; font-size: 13px; opacity: 0.8;">Has salido de la pantalla completa.</p>
+        <button class="btn-mot" onclick="activarModoInmersivo()">CONTINUAR / RESUME</button>
     </div>
 
     <div id="capa-login" class="capa activa">
@@ -125,17 +127,15 @@
                 ¿Ya tienes una misión? Reingresar
             </p>
 
-            <button onclick="resetIdioma()" style="background:none; border:none; color:#444; margin-top:30px; font-size:9px;">Cambiar Idioma / Change Language</button>
+            <button onclick="resetIdioma()" style="background:none; border:none; color:#555; margin-top:30px; font-size:10px; text-transform: uppercase;">Cambiar Idioma / Change Language</button>
         </div>
+
         <p id="aviso-login" style="margin-top:20px; font-size:12px; color:var(--naranja); font-weight:bold;"></p>
     </div>
 
     <script>
-        // --- CEREBRO: LÓGICA DE CONTROL ---
-        
         const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec"; 
-        
-        // Textos del sistema
+
         const TEXTOS = {
             es: {
                 ph_nombre: "Nombre del Agente", ph_clave: "Clave de Misión", btn_entrar: "INICIAR MISIÓN",
@@ -153,36 +153,46 @@
             }
         };
 
-        // Variables de Estado
         let idioma = 'es';
-        let nivelActual = 1;
         let modoReingreso = false;
 
-        // INICIALIZACIÓN
+        // --- INICIALIZACIÓN ---
         window.onload = () => {
-            verificarEstadoPantalla(); // Chequeo inicial de pantalla
-            // Autocarga si ya jugó antes
-            if(localStorage.getItem('motmot_lang')) setLanguage(localStorage.getItem('motmot_lang'), false);
-            if(localStorage.getItem('motmot_clave')) iniciarMision(true);
+            // Verificar pantalla al cargar
+            verificarEstadoPantalla();
             
-            // Listeners para detectar cambios de rotación/pantalla
+            // Si hay idioma guardado, lo pone, pero NO oculta las banderas si no se ha logueado recientemente
+            // (Para este caso, forzamos a mostrar banderas si no hay sesión activa visualmente)
+            if(localStorage.getItem('motmot_lang')) {
+                idioma = localStorage.getItem('motmot_lang');
+                // Si quieres que salte directo al form usa: setLanguage(idioma, true);
+                // Si prefieres que elija siempre: no hagas nada.
+            }
+            
+            // Listeners para rotación y fullscreen
             document.addEventListener("fullscreenchange", verificarEstadoPantalla);
             document.addEventListener("webkitfullscreenchange", verificarEstadoPantalla);
+            window.addEventListener("resize", verificarEstadoPantalla); // Extra seguridad
         };
 
-        // --- SISTEMA DE PANTALLA COMPLETA E INMERSIÓN ---
+        // --- CONTROL DE PANTALLA ---
         function activarModoInmersivo() {
             let elem = document.documentElement;
             let p;
             if (elem.requestFullscreen) p = elem.requestFullscreen();
-            else if (elem.webkitRequestFullscreen) p = elem.webkitRequestFullscreen();
+            else if (elem.webkitRequestFullscreen) p = elem.webkitRequestFullscreen(); // Safari/iOS
             
-            // Promesa para ocultar la capa de pausa si tiene éxito
             if(p) {
-                p.then(() => document.getElementById('capa-fullscreen-request').style.display = 'none')
-                 .catch(() => document.getElementById('capa-fullscreen-request').style.display = 'none');
+                p.then(() => {
+                    document.getElementById('capa-fullscreen-request').style.display = 'none';
+                }).catch(err => {
+                    console.log("Fullscreen denegado o cancelado", err);
+                    // Importante: Si falla (ej. en iOS a veces), ocultamos la capa igual para dejar jugar
+                    document.getElementById('capa-fullscreen-request').style.display = 'none';
+                });
             } else {
-                 document.getElementById('capa-fullscreen-request').style.display = 'none';
+                // Navegadores viejos
+                document.getElementById('capa-fullscreen-request').style.display = 'none';
             }
         }
 
@@ -193,16 +203,22 @@
 
         function verificarEstadoPantalla() {
             const isFullScreen = document.fullscreenElement || document.webkitFullscreenElement;
+            const isPortrait = window.innerHeight > window.innerWidth;
             const capaPausa = document.getElementById('capa-fullscreen-request');
-            // Si está horizontal Y NO es fullscreen, pedimos fullscreen
-            if (!isFullScreen && window.innerWidth > window.innerHeight) {
+
+            // LÓGICA DE CAPAS:
+            // 1. Si es Portrait -> CSS media query muestra #capa-rotar automáticamente.
+            // 2. Si es Landscape (Horizontal) y NO es FullScreen -> Mostrar Pausa.
+            // 3. Si es Landscape y SI es FullScreen -> Jugar.
+
+            if (!isPortrait && !isFullScreen) {
                 capaPausa.style.display = 'flex';
             } else {
                 capaPausa.style.display = 'none';
             }
         }
 
-        // --- SISTEMA DE ALERTAS (MODAL) ---
+        // --- ALERTAS ---
         function mostrarAlerta(texto, titulo="AVISO") {
             document.getElementById('alerta-titulo').innerText = titulo;
             document.getElementById('alerta-texto').innerText = texto;
@@ -210,57 +226,25 @@
         }
         function cerrarAlerta() { document.getElementById('capa-alerta').style.display = 'none'; }
 
-        // --- LÓGICA DE LOGIN Y CONEXIÓN ---
-        function iniciarMision(esRecarga = false) {
-            // 1. INTENTO DE FULLSCREEN AL TOCAR BOTÓN (CRÍTICO)
-            activarModoInmersivo();
-
-            // 2. Obtención de datos
-            let nom = document.getElementById('reg-nombre').value.trim();
-            const cla = esRecarga ? localStorage.getItem('motmot_clave') : document.getElementById('reg-clave').value.toUpperCase().trim();
+        // --- FUNCIONES DE INTERFAZ (IDIOMA Y FORM) ---
+        function setLanguage(lang, anim=true) {
+            idioma = lang; localStorage.setItem('motmot_lang', lang);
+            const t = TEXTOS[lang];
             
-            // Si es recarga automática, sacamos el nombre de la memoria
-            if (esRecarga) nom = localStorage.getItem('motmot_agente');
+            document.getElementById('reg-nombre').placeholder = t.ph_nombre;
+            document.getElementById('reg-clave').placeholder = t.ph_clave;
+            document.getElementById('btn-entrar').innerText = modoReingreso ? t.btn_recuperar : t.btn_entrar;
             
-            // Validaciones
-            if (!esRecarga && !modoReingreso && !nom) { mostrarAlerta(TEXTOS[idioma].err_need_name); return; }
-            if(!cla) return;
-            
-            if(esRecarga || modoReingreso) document.getElementById('aviso-login').innerText = TEXTOS[idioma].msg_recuperando;
-
-            // 3. Conexión con Google Sheets (JSONP)
-            ejecutarJSONP(`${URL_GOOGLE}?action=registrar_inicio&codigo=${cla}&nombre=${encodeURIComponent(nom)}`, (data) => {
-                if(data.status === "success") {
-                    // Guardar credenciales
-                    localStorage.setItem('motmot_clave', cla);
-                    localStorage.setItem('motmot_agente', data.nombre_jugador);
-                    localStorage.setItem('motmot_equipo', data.nombre_equipo);
-                    
-                    nivelActual = parseInt(data.pista_actual || 1);
-                    localStorage.setItem('motmot_pista', nivelActual);
-                    
-                    if(!esRecarga && data.modo === "reingreso") {
-                        mostrarAlerta(`Bienvenido de nuevo Agente ${data.nombre_jugador}`, "REGRESO");
-                    }
-                    
-                    // AQUÍ LLAMAREMOS A LA FUNCIÓN DEL TABLERO (irATablero) CUANDO TENGAMOS ESA PARTE
-                    console.log("Login Exitoso. Pasando al tablero...");
-                    // irATablero(); <--- Comentado hasta tener la parte 2
-                } else if(!esRecarga) {
-                    if (data.code === "ERR_NEED_NAME") mostrarAlerta(TEXTOS[idioma].err_need_name);
-                    else if (data.code === "ERR_USED") mostrarAlerta(TEXTOS[idioma].err_code, "ERROR");
-                    else document.getElementById('aviso-login').innerText = TEXTOS[idioma].err_code;
-                }
-            });
+            if(anim) {
+                document.getElementById('paso-idioma').style.display = 'none';
+                document.getElementById('paso-form').style.display = 'flex';
+            }
         }
 
-        // --- UTILIDADES ---
-        function ejecutarJSONP(url, callback) {
-            const cbName = 'jsonp_' + Math.round(100000 * Math.random());
-            window[cbName] = (data) => { delete window[cbName]; document.body.removeChild(script); callback(data); };
-            const script = document.createElement('script');
-            script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cbName;
-            document.body.appendChild(script);
+        function resetIdioma() {
+            // Regresa a la selección de banderas
+            document.getElementById('paso-form').style.display = 'none';
+            document.getElementById('paso-idioma').style.display = 'flex';
         }
 
         function alternarModoLogin() {
@@ -271,17 +255,49 @@
             document.getElementById('toggle-modo').innerText = modoReingreso ? t.toggle_nuevo : t.toggle_reingreso;
         }
 
-        function setLanguage(lang, anim=true) {
-            idioma = lang; localStorage.setItem('motmot_lang', lang);
-            const t = TEXTOS[lang];
-            document.getElementById('reg-nombre').placeholder = t.ph_nombre;
-            document.getElementById('reg-clave').placeholder = t.ph_clave;
-            document.getElementById('btn-entrar').innerText = modoReingreso ? t.btn_recuperar : t.btn_entrar;
+        // --- LÓGICA DE CONEXIÓN (CEREBRO) ---
+        function iniciarMision(esRecarga = false) {
+            // Intento de FullScreen al tocar el botón de Entrar
+            activarModoInmersivo();
+
+            let nom = document.getElementById('reg-nombre').value.trim();
+            const cla = esRecarga ? localStorage.getItem('motmot_clave') : document.getElementById('reg-clave').value.toUpperCase().trim();
             
-            if(anim) {
-                document.getElementById('paso-idioma').style.display = 'none';
-                document.getElementById('paso-form').style.display = 'flex';
-            }
+            if (esRecarga) nom = localStorage.getItem('motmot_agente');
+            
+            if (!esRecarga && !modoReingreso && !nom) { mostrarAlerta(TEXTOS[idioma].err_need_name); return; }
+            if(!cla) return;
+            
+            if(esRecarga || modoReingreso) document.getElementById('aviso-login').innerText = TEXTOS[idioma].msg_recuperando;
+
+            ejecutarJSONP(`${URL_GOOGLE}?action=registrar_inicio&codigo=${cla}&nombre=${encodeURIComponent(nom)}`, (data) => {
+                if(data.status === "success") {
+                    localStorage.setItem('motmot_clave', cla);
+                    localStorage.setItem('motmot_agente', data.nombre_jugador);
+                    localStorage.setItem('motmot_equipo', data.nombre_equipo);
+                    localStorage.setItem('motmot_pista', data.pista_actual || 1);
+                    
+                    if(!esRecarga && data.modo === "reingreso") {
+                        mostrarAlerta(`Bienvenido de nuevo Agente ${data.nombre_jugador}`, "REGRESO");
+                    }
+                    
+                    // --- AQUÍ CONECTAREMOS CON EL TABLERO ---
+                    console.log("Cerebro: Login OK. Esperando módulo Tablero...");
+                    // irATablero(); 
+                } else if(!esRecarga) {
+                    if (data.code === "ERR_NEED_NAME") mostrarAlerta(TEXTOS[idioma].err_need_name);
+                    else if (data.code === "ERR_USED") mostrarAlerta(TEXTOS[idioma].err_code, "ERROR");
+                    else document.getElementById('aviso-login').innerText = TEXTOS[idioma].err_code;
+                }
+            });
+        }
+
+        function ejecutarJSONP(url, callback) {
+            const cbName = 'jsonp_' + Math.round(100000 * Math.random());
+            window[cbName] = (data) => { delete window[cbName]; document.body.removeChild(script); callback(data); };
+            const script = document.createElement('script');
+            script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cbName;
+            document.body.appendChild(script);
         }
     </script>
 </body>
