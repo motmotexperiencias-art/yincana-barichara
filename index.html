@@ -25,11 +25,11 @@
         .capa { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; 
             display: none; flex-direction: column; align-items: center; justify-content: center; 
-            padding: 10px 40px; 
-            padding-left: max(40px, env(safe-area-inset-left)); 
-            padding-right: max(40px, env(safe-area-inset-right));
+            padding: 20px; 
+            padding-left: max(20px, env(safe-area-inset-left)); 
+            padding-right: max(20px, env(safe-area-inset-right));
             text-align: center; z-index: 10; background: var(--negro); 
-            overflow-y: auto; 
+            overflow-y: auto; /* Permite scroll si la pantalla es muy pequeña */
         }
         .activa { display: flex !important; }
         
@@ -38,84 +38,69 @@
             width: 100%;
             max-width: 500px;
             display: flex; flex-direction: column; align-items: center;
-            padding-bottom: 20px; 
+            /* Flexibilidad para pantallas pequeñas */
+            justify-content: center;
         }
 
         .video-bg { position: absolute; z-index: -1; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: brightness(0.7); }
 
-        /* Botones */
+        /* ESTILOS BASE (Pantallas Normales) */
+        .titulo-principal { font-size: 24px; letter-spacing: 3px; color: var(--naranja); margin: 5px 0; }
+        .subtitulo { font-size: 11px; opacity: 0.6; letter-spacing: 4px; margin: 5px 0; }
+        
         .btn-mot { 
             background: transparent; border: 2px solid var(--naranja); color: var(--naranja); 
             padding: 12px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; 
             text-transform: uppercase; width: auto; min-width: 220px; font-size: 14px; 
-            margin-top: 15px; 
+            margin-top: 20px; 
             transition: 0.3s; letter-spacing: 2px;
         }
         .btn-mot:active { background: var(--naranja); color: #000; transform: scale(0.95); }
 
-        /* Inputs */
         input { 
             background: transparent; border: none; border-bottom: 2px solid #666; 
-            color: white; padding: 10px; margin: 10px 0; 
+            color: white; padding: 12px; margin: 10px 0; 
             width: 100%; max-width: 300px; 
             text-align: center; font-size: 18px; outline: none; transition: 0.3s; border-radius: 0; 
         }
         input:focus { border-bottom-color: var(--naranja); transform: scale(1.05); }
 
-        /* CAPA ROTACIÓN */
+        /* Banderas */
+        #paso-idioma { display: flex; gap: 40px; justify-content: center; margin-top: 20px; }
+        .lang-option { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; }
+        .lang-option:active { transform: scale(1.1); }
+        .flag-btn { font-size: 55px; background: none; border: none; cursor: pointer; padding: 0; margin: 0; }
+        .lang-label { margin-top: 10px; font-size: 11px; letter-spacing: 2px; color: #fff; font-weight: bold; opacity: 0.8; }
+
+        /* --- MEDIA QUERIES (MAGIA RESPONSIVE) --- */
+        /* Esto se activa cuando la altura es poca (celular horizontal) */
+        @media (max-height: 500px) {
+            .capa { padding-top: 10px; padding-bottom: 10px; justify-content: center; }
+            .titulo-principal { font-size: 18px; margin: 2px 0; } /* Título más pequeño */
+            .subtitulo { font-size: 9px; margin: 2px 0; }
+            .btn-mot { padding: 8px 20px; font-size: 12px; margin-top: 10px; min-width: 180px; } /* Botones compactos */
+            input { padding: 6px; margin: 5px 0; font-size: 14px; } /* Inputs compactos */
+            .flag-btn { font-size: 40px; } /* Banderas más pequeñas */
+            #paso-idioma { margin-top: 10px; gap: 30px; }
+            .modal-caja { padding: 15px; } /* Alerta más pequeña */
+            #btn-audio-login { width: 35px; height: 35px; font-size: 16px; top: 10px; right: 10px; } /* Botón audio ajustado */
+        }
+
+        /* Utilidades */
         #capa-rotar { position: fixed; inset: 0; background: #000; z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
         #icono-rotar { font-size: 60px; animation: girar 2s infinite; margin-bottom: 20px; }
         @keyframes girar { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
         @media (orientation: portrait) { #capa-rotar { display: flex !important; } }
 
-        /* CAPA PAUSA */
-        #capa-fullscreen-request {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 99990;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; backdrop-filter: blur(10px);
-            padding: 40px;
-        }
-        
-        #btn-toggle-fs {
-            position: fixed; top: 20px; left: 20px; z-index: 999999;
-            background: rgba(0,0,0,0.3); border: 1px solid #555;
-            color: #888; padding: 8px 12px; border-radius: 20px;
-            font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
-        }
-        
-        /* Botón Audio Login */
-        #btn-audio-login {
-            position: absolute; top: 20px; right: 20px;
-            font-size: 20px; cursor: pointer; opacity: 0.8; z-index: 20;
-            background: rgba(0,0,0,0.6); border-radius: 50%; width: 50px; height: 50px;
-            display: flex; align-items: center; justify-content: center; border: 1px solid #555;
-            transition: 0.3s;
-        }
+        #capa-fullscreen-request { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 99990; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; backdrop-filter: blur(10px); padding: 40px; }
+        #btn-toggle-fs { position: fixed; top: 20px; left: 20px; z-index: 999999; background: rgba(0,0,0,0.3); border: 1px solid #555; color: #888; padding: 8px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        #btn-audio-login { position: absolute; top: 20px; right: 20px; font-size: 20px; cursor: pointer; opacity: 0.8; z-index: 20; background: rgba(0,0,0,0.6); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border: 1px solid #555; transition: 0.3s; }
         #btn-audio-login:active { transform: scale(0.9); background: var(--naranja); }
 
-        /* Alertas Modal */
         #capa-alerta { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200000; display: none; align-items: center; justify-content: center; }
         .modal-caja { background: #111; border: 2px solid var(--naranja); border-radius: 15px; padding: 30px; max-width: 90%; width: 350px; text-align: center; box-shadow: 0 0 40px rgba(255, 102, 0, 0.3); }
         .modal-titulo { color: var(--naranja); font-size: 20px; font-weight: bold; margin-bottom: 20px; letter-spacing: 2px;}
         .modal-texto { color: #ddd; font-size: 15px; margin-bottom: 20px; line-height: 1.6; }
-
-        /* SELECTOR DE IDIOMA */
-        #paso-idioma {
-            display: flex; gap: 40px; justify-content: center; margin-top: 15px; 
-        }
-        .lang-option {
-            display: flex; flex-direction: column; align-items: center; cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .lang-option:active { transform: scale(1.1); }
-        .flag-btn { 
-            font-size: 50px; 
-            background: none; border: none; cursor: pointer; padding: 0; margin: 0;
-        }
-        .lang-label {
-            margin-top: 10px; font-size: 11px; letter-spacing: 2px; color: #fff; font-weight: bold; opacity: 0.8;
-        }
-
         .oculto { display: none !important; }
     </style>
 </head>
@@ -125,7 +110,7 @@
         <div class="modal-caja">
             <div id="alerta-titulo" class="modal-titulo">AVISO</div>
             <div id="alerta-texto" class="modal-texto">Mensaje...</div>
-            <button class="btn-mot" onclick="cerrarAlerta()" style="padding: 12px 25px; margin-top: 0; font-size: 12px; border-color: #555; color: #fff;">ENTENDIDO</button>
+            <button class="btn-mot" onclick="cerrarAlerta()" style="padding: 10px 20px; margin-top: 0; font-size: 12px; border-color: #555; color: #fff;">ENTENDIDO</button>
         </div>
     </div>
 
@@ -150,10 +135,10 @@
         <div id="btn-audio-login" onclick="toggleAudioLogin()">🔊</div>
 
         <div class="contenido-central">
-            <div style="margin-bottom: 15px; margin-top: 60px;">
-                <p style="font-size: 10px; opacity: 0.6; letter-spacing: 4px; margin-bottom: 5px;">BARICHARA</p>
-                <h2 style="letter-spacing:3px; color: var(--naranja); font-size: 22px; margin: 0;">BÚSQUEDA DEL TESORO</h2>
-                <p style="font-size: 10px; opacity: 0.6; letter-spacing: 4px; margin-top: 5px;">MOT MOT EXPERIENCIAS</p>
+            <div style="margin-bottom: 15px;">
+                <p class="subtitulo">BARICHARA</p>
+                <h2 class="titulo-principal">BÚSQUEDA DEL TESORO</h2>
+                <p class="subtitulo">MOT MOT EXPERIENCIAS</p>
             </div>
             
             <div id="paso-idioma">
@@ -177,13 +162,13 @@
                     ¿Ya tienes una misión? Reingresar
                 </p>
 
-                <button onclick="resetIdioma()" style="background:rgba(255,255,255,0.1); border:1px solid #555; border-radius: 30px; padding: 8px 15px; color:#aaa; margin-top:25px; font-size: 10px; text-transform: uppercase; cursor: pointer; transition:0.3s;">
+                <button onclick="resetIdioma()" style="background:rgba(255,255,255,0.1); border:1px solid #555; border-radius: 30px; padding: 6px 15px; color:#aaa; margin-top:20px; font-size: 9px; text-transform: uppercase; cursor: pointer; transition:0.3s;">
                     ⬅ Cambiar Idioma / Change Language
                 </button>
             </div>
         </div>
 
-        <p id="aviso-login" style="margin-top:20px; font-size:13px; color:var(--naranja); font-weight:bold;"></p>
+        <p id="aviso-login" style="margin-top:15px; font-size:12px; color:var(--naranja); font-weight:bold;"></p>
     </div>
 
     <script>
