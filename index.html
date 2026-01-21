@@ -19,21 +19,27 @@
         
         body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100dvh; width: 100vw; font-family: 'Verdana', sans-serif; overflow: hidden; }
         
-        /* BOTÓN FLOTANTE FULL SCREEN (Solo visible si no está en full screen) */
-        #btn-fullscreen {
-            position: fixed; top: 10px; right: 10px; z-index: 999999;
-            background: rgba(0,0,0,0.5); border: 1px solid var(--naranja);
-            color: var(--naranja); padding: 10px; border-radius: 50%;
-            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-            font-size: 20px; cursor: pointer; transition: 0.3s;
+        /* BOTÓN FLOTANTE SALIR/ENTRAR FULLSCREEN (Opcional, arriba a la izquierda) */
+        #btn-toggle-fs {
+            position: fixed; top: 10px; left: 10px; z-index: 999999;
+            background: rgba(0,0,0,0.5); border: 1px solid #444;
+            color: #aaa; padding: 5px; border-radius: 4px;
+            font-size: 10px; cursor: pointer; text-transform: uppercase;
         }
-        #btn-fullscreen:active { background: var(--naranja); color: black; }
 
-        /* CAPA DE ROTACIÓN */
-        #capa-rotar { position: fixed; inset: 0; background: #000; z-index: 99990; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
+        /* CAPA DE ROTACIÓN (Prioridad Máxima) */
+        #capa-rotar { position: fixed; inset: 0; background: #000; z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
         #icono-rotar { font-size: 60px; animation: girar 2s infinite; margin-bottom: 20px; }
         @keyframes girar { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
-        @media (orientation: portrait) { #capa-rotar { display: flex; } }
+        /* Solo visible si la pantalla es más alta que ancha (Portrait) */
+        @media (orientation: portrait) { #capa-rotar { display: flex !important; } }
+
+        /* CAPA DE PAUSA / INICIO (Si está horizontal pero NO full screen) */
+        #capa-fullscreen-request {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 99990;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; backdrop-filter: blur(5px);
+        }
 
         /* EFECTO FLASH */
         #flash-effect { position: fixed; inset: 0; background: white; z-index: 20000; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
@@ -71,13 +77,18 @@
 
     <div id="flash-effect"></div>
 
-    <div id="btn-fullscreen" onclick="toggleFullScreen()">⛶</div>
+    <div id="btn-toggle-fs" onclick="toggleFullScreen()">⛶ PANTALLA</div>
 
-    <div id="capa-rotar" onclick="activarPantallaCompleta()">
+    <div id="capa-rotar">
         <div id="icono-rotar">📱</div>
-        <h3>POR FAVOR GIRA TU DISPOSITIVO</h3>
-        <p style="opacity: 0.7;">Para vivir la experiencia cinematográfica, usa el celular en horizontal.</p>
-        <p style="font-size:10px; margin-top:20px; color:var(--naranja);">(TOCA LA PANTALLA AL GIRAR)</p>
+        <h3>GIRA TU DISPOSITIVO</h3>
+        <p style="opacity: 0.7;">Experiencia diseñada para formato horizontal.</p>
+    </div>
+
+    <div id="capa-fullscreen-request">
+        <h2 style="color:var(--naranja); letter-spacing: 5px; margin-bottom: 20px;">JUEGO PAUSADO</h2>
+        <p style="margin-bottom: 30px; font-size: 14px; width: 80%;">Para la mejor experiencia inmersiva, activa la pantalla completa.</p>
+        <button class="btn-mot" onclick="activarModoInmersivo()">CONTINUAR / START</button>
     </div>
 
     <div id="capa-login" class="capa activa">
@@ -211,34 +222,64 @@
         let ultimaCapa = 'capa-login';
 
         window.onload = () => {
+            verificarEstadoPantalla(); // Chequeo inicial
             if(localStorage.getItem('motmot_lang')) setLanguage(localStorage.getItem('motmot_lang'), false);
             if(localStorage.getItem('motmot_clave')) iniciarMision(true);
+            
+            // Listeners para detectar cambios de full screen
+            document.addEventListener("fullscreenchange", verificarEstadoPantalla);
+            document.addEventListener("webkitfullscreenchange", verificarEstadoPantalla);
         };
 
-        // --- GESTIÓN DE PANTALLA COMPLETA ---
-        function activarPantallaCompleta() {
+        // --- SISTEMA INTELIGENTE DE PANTALLA ---
+        function activarModoInmersivo() {
             let elem = document.documentElement;
-            if (elem.requestFullscreen) elem.requestFullscreen().catch(e=>console.log(e));
-            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-            else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
-        }
-
-        function desactivarPantallaCompleta() {
-            if (document.exitFullscreen) document.exitFullscreen();
-            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            let promesa;
+            if (elem.requestFullscreen) promesa = elem.requestFullscreen();
+            else if (elem.webkitRequestFullscreen) promesa = elem.webkitRequestFullscreen();
+            else if (elem.msRequestFullscreen) promesa = elem.msRequestFullscreen();
+            
+            if(promesa) {
+                promesa.then(() => {
+                    document.getElementById('capa-fullscreen-request').style.display = 'none';
+                }).catch(err => {
+                    console.log("Error Fullscreen:", err);
+                    // Si falla, ocultamos la capa igual para dejar jugar, aunque sea con barras
+                    document.getElementById('capa-fullscreen-request').style.display = 'none';
+                });
+            }
         }
 
         function toggleFullScreen() {
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                activarPantallaCompleta();
+                activarModoInmersivo();
             } else {
-                desactivarPantallaCompleta();
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            }
+        }
+
+        function verificarEstadoPantalla() {
+            // Lógica:
+            // 1. Si es vertical -> El CSS de #capa-rotar se encarga (tiene prioridad).
+            // 2. Si es horizontal pero NO hay fullscreen -> Mostrar #capa-fullscreen-request.
+            // 3. Si es horizontal Y hay fullscreen -> Ocultar #capa-fullscreen-request.
+            
+            const isFullScreen = document.fullscreenElement || document.webkitFullscreenElement;
+            const capaPausa = document.getElementById('capa-fullscreen-request');
+
+            // Solo mostramos la pausa si estamos en horizontal y NO fullscreen
+            // (La detección de horizontal la hacemos asumiendo que el usuario ya giró si no ve la capa rotar)
+            if (!isFullScreen) {
+                capaPausa.style.display = 'flex';
+            } else {
+                capaPausa.style.display = 'none';
             }
         }
 
         function iniciarMision(esRecarga = false) {
-            // INTENTO DE ACTIVACIÓN AL TOCAR EL BOTÓN
-            activarPantallaCompleta();
+            // Intentar activar fullscreen al dar click en Entrar
+            activarModoInmersivo();
 
             let nom = document.getElementById('reg-nombre').value.trim();
             const cla = esRecarga ? localStorage.getItem('motmot_clave') : document.getElementById('reg-clave').value.toUpperCase().trim();
@@ -288,7 +329,7 @@
             const data = PISTAS_DATA[n];
             const info = data[idioma];
             
-            // RESET VIDEO FORZADO
+            // RESET VIDEO PARA EVITAR BLOQUEOS
             const vid = document.getElementById('pista-video');
             vid.pause();
             vid.src = "";
