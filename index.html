@@ -64,6 +64,16 @@
             color: #888; padding: 6px 10px; border-radius: 20px;
             font-size: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
         }
+        
+        /* --- NUEVO: Botón Audio Login --- */
+        #btn-audio-login {
+            position: absolute; top: 20px; right: 20px;
+            font-size: 20px; cursor: pointer; opacity: 0.8; z-index: 20;
+            background: rgba(0,0,0,0.6); border-radius: 50%; width: 45px; height: 45px;
+            display: flex; align-items: center; justify-content: center; border: 1px solid #555;
+            transition: 0.3s;
+        }
+        #btn-audio-login:active { transform: scale(0.9); background: var(--naranja); }
 
         /* Alertas Modal */
         #capa-alerta { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200000; display: none; align-items: center; justify-content: center; }
@@ -104,8 +114,10 @@
     </div>
 
     <div id="capa-login" class="capa activa">
-        <video class="video-bg" autoplay muted loop playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
+        <video id="vid-login" class="video-bg" autoplay muted loop playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
         
+        <div id="btn-audio-login" onclick="toggleAudioLogin()">🔇</div>
+
         <div style="margin-bottom: 40px;">
             <p style="font-size: 10px; opacity: 0.6; letter-spacing: 3px; margin-bottom: 5px;">BARICHARA</p>
             <h2 style="letter-spacing:3px; color: var(--naranja);">BÚSQUEDA DEL TESORO</h2>
@@ -158,40 +170,43 @@
 
         // --- INICIALIZACIÓN ---
         window.onload = () => {
-            // Verificar pantalla al cargar
             verificarEstadoPantalla();
-            
-            // Si hay idioma guardado, lo pone, pero NO oculta las banderas si no se ha logueado recientemente
-            // (Para este caso, forzamos a mostrar banderas si no hay sesión activa visualmente)
             if(localStorage.getItem('motmot_lang')) {
                 idioma = localStorage.getItem('motmot_lang');
-                // Si quieres que salte directo al form usa: setLanguage(idioma, true);
-                // Si prefieres que elija siempre: no hagas nada.
             }
-            
-            // Listeners para rotación y fullscreen
             document.addEventListener("fullscreenchange", verificarEstadoPantalla);
             document.addEventListener("webkitfullscreenchange", verificarEstadoPantalla);
-            window.addEventListener("resize", verificarEstadoPantalla); // Extra seguridad
+            window.addEventListener("resize", verificarEstadoPantalla);
         };
+
+        // --- CONTROL DE AUDIO LOGIN ---
+        function toggleAudioLogin() {
+            const vid = document.getElementById('vid-login');
+            const btn = document.getElementById('btn-audio-login');
+            
+            if (vid.muted) {
+                vid.muted = false;
+                btn.innerText = "🔊"; // Cambia a ícono de sonido
+            } else {
+                vid.muted = true;
+                btn.innerText = "🔇"; // Cambia a ícono de silencio
+            }
+        }
 
         // --- CONTROL DE PANTALLA ---
         function activarModoInmersivo() {
             let elem = document.documentElement;
             let p;
             if (elem.requestFullscreen) p = elem.requestFullscreen();
-            else if (elem.webkitRequestFullscreen) p = elem.webkitRequestFullscreen(); // Safari/iOS
+            else if (elem.webkitRequestFullscreen) p = elem.webkitRequestFullscreen();
             
             if(p) {
                 p.then(() => {
                     document.getElementById('capa-fullscreen-request').style.display = 'none';
                 }).catch(err => {
-                    console.log("Fullscreen denegado o cancelado", err);
-                    // Importante: Si falla (ej. en iOS a veces), ocultamos la capa igual para dejar jugar
                     document.getElementById('capa-fullscreen-request').style.display = 'none';
                 });
             } else {
-                // Navegadores viejos
                 document.getElementById('capa-fullscreen-request').style.display = 'none';
             }
         }
@@ -205,11 +220,6 @@
             const isFullScreen = document.fullscreenElement || document.webkitFullscreenElement;
             const isPortrait = window.innerHeight > window.innerWidth;
             const capaPausa = document.getElementById('capa-fullscreen-request');
-
-            // LÓGICA DE CAPAS:
-            // 1. Si es Portrait -> CSS media query muestra #capa-rotar automáticamente.
-            // 2. Si es Landscape (Horizontal) y NO es FullScreen -> Mostrar Pausa.
-            // 3. Si es Landscape y SI es FullScreen -> Jugar.
 
             if (!isPortrait && !isFullScreen) {
                 capaPausa.style.display = 'flex';
@@ -226,7 +236,7 @@
         }
         function cerrarAlerta() { document.getElementById('capa-alerta').style.display = 'none'; }
 
-        // --- FUNCIONES DE INTERFAZ (IDIOMA Y FORM) ---
+        // --- FUNCIONES DE INTERFAZ ---
         function setLanguage(lang, anim=true) {
             idioma = lang; localStorage.setItem('motmot_lang', lang);
             const t = TEXTOS[lang];
@@ -242,7 +252,6 @@
         }
 
         function resetIdioma() {
-            // Regresa a la selección de banderas
             document.getElementById('paso-form').style.display = 'none';
             document.getElementById('paso-idioma').style.display = 'flex';
         }
@@ -257,7 +266,6 @@
 
         // --- LÓGICA DE CONEXIÓN (CEREBRO) ---
         function iniciarMision(esRecarga = false) {
-            // Intento de FullScreen al tocar el botón de Entrar
             activarModoInmersivo();
 
             let nom = document.getElementById('reg-nombre').value.trim();
@@ -281,7 +289,6 @@
                         mostrarAlerta(`Bienvenido de nuevo Agente ${data.nombre_jugador}`, "REGRESO");
                     }
                     
-                    // --- AQUÍ CONECTAREMOS CON EL TABLERO ---
                     console.log("Cerebro: Login OK. Esperando módulo Tablero...");
                     // irATablero(); 
                 } else if(!esRecarga) {
