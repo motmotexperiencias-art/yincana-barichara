@@ -24,6 +24,7 @@
         /* Capas Generales */
         .capa { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; z-index: 10; background: var(--negro); }
         .activa { display: flex !important; }
+        /* Video ajustado para intentar autoplay */
         .video-bg { position: absolute; z-index: -1; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: brightness(0.7); }
 
         /* Botones */
@@ -47,17 +48,15 @@
         #capa-rotar { position: fixed; inset: 0; background: #000; z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
         #icono-rotar { font-size: 60px; animation: girar 2s infinite; margin-bottom: 20px; }
         @keyframes girar { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
-        /* Solo se muestra si es portrait (vertical) */
         @media (orientation: portrait) { #capa-rotar { display: flex !important; } }
 
-        /* CAPA PAUSA (Horizontal pero sin Fullscreen) */
+        /* CAPA PAUSA */
         #capa-fullscreen-request {
             position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 99990;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; backdrop-filter: blur(10px);
         }
         
-        /* Botón discreto en esquina */
         #btn-toggle-fs {
             position: fixed; top: 15px; left: 15px; z-index: 999999;
             background: rgba(0,0,0,0.3); border: 1px solid #555;
@@ -65,7 +64,7 @@
             font-size: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
         }
         
-        /* --- NUEVO: Botón Audio Login --- */
+        /* Botón Audio Login */
         #btn-audio-login {
             position: absolute; top: 20px; right: 20px;
             font-size: 20px; cursor: pointer; opacity: 0.8; z-index: 20;
@@ -81,9 +80,22 @@
         .modal-titulo { color: var(--naranja); font-size: 18px; font-weight: bold; margin-bottom: 15px; letter-spacing: 2px;}
         .modal-texto { color: #ddd; font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
 
-        /* Banderas */
-        .flag-btn { font-size: 45px; background: none; border: none; cursor: pointer; margin: 0 15px; transition: transform 0.2s; }
-        .flag-btn:active { transform: scale(1.2); }
+        /* SELECTOR DE IDIOMA MEJORADO */
+        #paso-idioma {
+            display: flex; gap: 30px; justify-content: center; margin-top: 20px;
+        }
+        .lang-option {
+            display: flex; flex-direction: column; align-items: center; cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .lang-option:active { transform: scale(1.1); }
+        .flag-btn { 
+            font-size: 50px; /* Banderas un poco más grandes */
+            background: none; border: none; cursor: pointer; padding: 0; margin: 0;
+        }
+        .lang-label {
+            margin-top: 10px; font-size: 11px; letter-spacing: 2px; color: #aaa; font-weight: bold;
+        }
 
         .oculto { display: none !important; }
     </style>
@@ -114,9 +126,9 @@
     </div>
 
     <div id="capa-login" class="capa activa">
-        <video id="vid-login" class="video-bg" autoplay muted loop playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
+        <video id="vid-login" class="video-bg" autoplay loop playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
         
-        <div id="btn-audio-login" onclick="toggleAudioLogin()">🔇</div>
+        <div id="btn-audio-login" onclick="toggleAudioLogin()">🔊</div>
 
         <div style="margin-bottom: 40px;">
             <p style="font-size: 10px; opacity: 0.6; letter-spacing: 3px; margin-bottom: 5px;">BARICHARA</p>
@@ -125,8 +137,14 @@
         </div>
         
         <div id="paso-idioma">
-            <button class="flag-btn" onclick="setLanguage('es')">🇨🇴</button>
-            <button class="flag-btn" onclick="setLanguage('en')">🇬🇧</button>
+            <div class="lang-option" onclick="setLanguage('es')">
+                <button class="flag-btn">🇨🇴</button>
+                <span class="lang-label">ESPAÑOL</span>
+            </div>
+            <div class="lang-option" onclick="setLanguage('en')">
+                <button class="flag-btn">🇬🇧</button>
+                <span class="lang-label">ENGLISH</span>
+            </div>
         </div>
 
         <div id="paso-form" style="display:none; width:100%; flex-direction:column; align-items:center;">
@@ -139,7 +157,9 @@
                 ¿Ya tienes una misión? Reingresar
             </p>
 
-            <button onclick="resetIdioma()" style="background:none; border:none; color:#555; margin-top:30px; font-size:10px; text-transform: uppercase;">Cambiar Idioma / Change Language</button>
+            <button onclick="resetIdioma()" style="background:none; border:1px solid #333; border-radius: 20px; padding: 8px 15px; color:#777; margin-top:30px; font-size:9px; text-transform: uppercase; cursor: pointer;">
+                Cambiar Idioma / Change Language
+            </button>
         </div>
 
         <p id="aviso-login" style="margin-top:20px; font-size:12px; color:var(--naranja); font-weight:bold;"></p>
@@ -171,6 +191,8 @@
         // --- INICIALIZACIÓN ---
         window.onload = () => {
             verificarEstadoPantalla();
+            intentarAudioAutomatico(); // Intento de sonido al cargar
+
             if(localStorage.getItem('motmot_lang')) {
                 idioma = localStorage.getItem('motmot_lang');
             }
@@ -179,23 +201,49 @@
             window.addEventListener("resize", verificarEstadoPantalla);
         };
 
-        // --- CONTROL DE AUDIO LOGIN ---
+        // --- CONTROL DE AUDIO ---
+        function intentarAudioAutomatico() {
+            const vid = document.getElementById('vid-login');
+            const btn = document.getElementById('btn-audio-login');
+            
+            // Intentamos reproducir con sonido
+            vid.muted = false;
+            let promise = vid.play();
+            
+            if (promise !== undefined) {
+                promise.then(_ => {
+                    // Éxito: El video suena
+                    btn.innerText = "🔊";
+                }).catch(error => {
+                    // Fallo (Bloqueo del navegador): Silenciamos para que al menos se vea
+                    console.log("Autoplay con sonido bloqueado. Iniciando en Mute.");
+                    vid.muted = true;
+                    vid.play();
+                    btn.innerText = "🔇";
+                });
+            }
+        }
+
         function toggleAudioLogin() {
             const vid = document.getElementById('vid-login');
             const btn = document.getElementById('btn-audio-login');
             
             if (vid.muted) {
                 vid.muted = false;
-                btn.innerText = "🔊"; // Cambia a ícono de sonido
+                btn.innerText = "🔊"; 
             } else {
                 vid.muted = true;
-                btn.innerText = "🔇"; // Cambia a ícono de silencio
+                btn.innerText = "🔇"; 
             }
         }
 
         // --- CONTROL DE PANTALLA ---
         function activarModoInmersivo() {
             let elem = document.documentElement;
+            // Intento extra de activar audio al primer toque del usuario
+            const vid = document.getElementById('vid-login');
+            if(vid.muted) { vid.muted = false; document.getElementById('btn-audio-login').innerText = "🔊"; }
+
             let p;
             if (elem.requestFullscreen) p = elem.requestFullscreen();
             else if (elem.webkitRequestFullscreen) p = elem.webkitRequestFullscreen();
@@ -264,7 +312,7 @@
             document.getElementById('toggle-modo').innerText = modoReingreso ? t.toggle_nuevo : t.toggle_reingreso;
         }
 
-        // --- LÓGICA DE CONEXIÓN (CEREBRO) ---
+        // --- LÓGICA DE CONEXIÓN ---
         function iniciarMision(esRecarga = false) {
             activarModoInmersivo();
 
