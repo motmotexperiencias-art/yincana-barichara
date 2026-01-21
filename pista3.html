@@ -13,38 +13,30 @@
 
     <style>
         /* --- ESTILOS GENERALES --- */
-        body, html { margin: 0; padding: 0; background: #000; color: white; height: 100vh; width: 100vw; font-family: 'Verdana', sans-serif; overflow: hidden; }
+        body, html { margin: 0; padding: 0; background: #000; color: white; height: 100vh; width: 100vw; font-family: 'Courier New', monospace; overflow: hidden; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        /* --- LAYOUT DIVIDIDO (SPLIT SCREEN) --- */
-        #app-juego { 
-            position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: row; 
-            background: #000;
-        }
+        /* --- LAYOUT DIVIDIDO --- */
+        #app-juego { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: row; background: #000; }
 
-        /* COLUMNA IZQUIERDA (CONTENIDO) */
+        /* COLUMNA IZQUIERDA (CONTENIDO JUEGO) */
         .col-juego { 
             flex: 1; position: relative; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; background: #080808; 
             border-right: 2px solid #222; overflow-y: auto; padding: 20px;
         }
 
-        /* COLUMNA DERECHA (MAPA) */
-        .col-mapa { 
-            flex: 1; position: relative; display: flex; 
-        }
+        /* COLUMNA DERECHA (MAPA DECORATIVO PC) */
+        .col-mapa { flex: 1; position: relative; display: flex; }
 
-        /* MÓVIL VERTICAL (ESCONDER MAPA) */
-        @media screen and (max-width: 768px) and (orientation: portrait) {
+        /* MÓVIL (VERTICAL) */
+        @media screen and (max-width: 768px) {
             #app-juego { flex-direction: column; }
-            .col-mapa { display: none; } /* En vertical enfocamos en el contenido */
+            .col-mapa { display: none; } /* Ocultamos el mapa lateral en móvil */
             .col-juego { border-right: none; width: 100%; }
         }
 
-        /* --- MAPA LEAFLET --- */
-        #mapa-cementerio { width: 100%; height: 100%; filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
-
-        /* --- BARRA DE PROGRESO --- */
+        /* --- UI ELEMENTOS --- */
         .progress-container { width: 100%; display: flex; justify-content: center; margin-bottom: 20px; }
         .progress-bar { display: flex; gap: 8px; }
         .dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #444; transition: 0.3s; }
@@ -52,7 +44,6 @@
         .dot.active { background: #ff6600; border-color: #ff6600; transform: scale(1.3); box-shadow: 0 0 10px #ff6600; }
         .dot.future { background: transparent; }
 
-        /* --- ESTILOS VISUALES JUEGO --- */
         .etiqueta-evidencia {
             background: #ff6600; color: #000; font-weight: 900; padding: 6px 15px; 
             display: inline-block; text-transform: uppercase; letter-spacing: 2px; 
@@ -61,16 +52,23 @@
 
         .caja-contenedor {
             width: 100%; max-width: 400px; border: 1px solid #333; background: #111; 
-            border-radius: 15px; overflow: hidden; padding: 15px; text-align: center;
+            border-radius: 15px; overflow: hidden; padding: 20px; text-align: center; margin-bottom: 20px;
         }
 
+        /* MAPA GPS (Dentro del juego) */
+        #mapa-gps-activo { width: 100%; height: 250px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #ff6600; }
+        #distancia-gps { font-size: 40px; color: #ff6600; font-weight: bold; margin: 10px 0; }
+        .leaflet-tile { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+
+        /* VIDEOS */
         .video-evidencia { width: 100%; border-radius: 10px; display: none; aspect-ratio: 9/16; object-fit: cover; }
         .video-evidencia.activo { display: block; }
 
+        /* BOTONES */
         .btn-motmot { 
             background: transparent; border: 2px solid #ff6600; color: #ff6600; 
             padding: 12px 30px; border-radius: 50px; cursor: pointer; text-transform: uppercase; 
-            letter-spacing: 2px; font-size: 11px; font-weight: bold; transition: 0.3s; margin-top: 15px; width: 100%;
+            letter-spacing: 2px; font-size: 11px; font-weight: bold; transition: 0.3s; width: 100%; margin-top:10px;
         }
         .btn-motmot:active { background: #ff6600; color: #000; }
 
@@ -81,27 +79,24 @@
         }
         .btn-opcion-azul:active { border-color: #0055ff; background: #001133; }
 
-        /* --- ESCÁNER --- */
+        /* SCANNER */
         #scan-container { position: relative; width: 100%; height: 250px; background: black; overflow: hidden; border-radius: 10px; border: 2px solid #333; }
         #reader { width: 100%; height: 100%; }
         .laser { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #ff6600; box-shadow: 0 0 10px #ff6600; animation: scan 2s infinite; z-index: 10; }
         @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
 
-        /* --- CAPAS DE AVISO (PAUSA) --- */
-        #aviso-pausa { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; 
-            display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; 
-        }
-
+        /* AVISOS */
+        #aviso-pausa { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
         #flash-efecto { display: none; position: fixed; inset: 0; background: white; z-index: 10000; pointer-events: none; }
+        #mapa-referencia { width: 100%; height: 100%; filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
     </style>
 </head>
 <body>
 
     <div id="aviso-pausa">
-        <h2 style="color:#ff6600; margin-bottom:10px;">JUEGO EN PAUSA</h2>
-        <p style="color:#ccc; font-size:12px; margin-bottom:20px;">Has salido de la Misión. Toca para continuar.</p>
-        <button class="btn-motmot" style="width: auto;" onclick="reanudarJuego()">CONTINUAR MISIÓN</button>
+        <h2 style="color:#ff6600; margin-bottom:10px;">SISTEMA EN PAUSA</h2>
+        <p style="color:#ccc; font-size:12px; margin-bottom:20px;">Toca para reanudar la misión.</p>
+        <button class="btn-motmot" style="width:auto" onclick="reanudarJuego()">CONTINUAR</button>
     </div>
 
     <div id="flash-efecto"></div>
@@ -116,76 +111,70 @@
                 <div class="dot passed"></div> <div class="dot passed"></div> <div class="dot passed"></div> <div class="dot active"></div> <div class="dot future"></div> 
             </div></div>
 
-            <div id="fase-inicio" class="caja-contenedor" style="border:none; background:transparent;">
-                <div style="font-size: 50px; color:#ff6600; margin-bottom:20px;">☠️</div>
-                <div class="etiqueta-evidencia">PISTA #4: EL DESCANSO</div>
-                <p style="color:#ccc; font-size:12px; margin-bottom:20px;">"Donde el silencio habla más fuerte que las palabras. Dirígete a las coordenadas marcadas en el mapa."</p>
-                <button class="btn-motmot" onclick="iniciarMision()">INICIAR ANÁLISIS</button>
+            <div id="step-intro" class="caja-contenedor" style="border:none; background:transparent;">
+                <div style="font-size: 50px; margin-bottom:20px;">🪦</div>
+                <div class="etiqueta-evidencia" id="lbl-titulo">PISTA 4: EL DESCANSO</div>
+                <p style="color:#ccc; font-size:12px; margin-bottom:20px;" id="txt-intro">"Donde el silencio habla más fuerte que las palabras. Dirígete al lugar del descanso eterno."</p>
+                <button class="btn-motmot" id="btn-start" onclick="iniciarGPS()">INICIAR RASTREO</button>
             </div>
 
-            <div id="seccion-videos" style="display:none; width:100%; flex-direction:column; align-items:center;">
+            <div id="step-gps" class="caja-contenedor" style="display:none;">
+                <div class="etiqueta-evidencia" id="lbl-obj">OBJETIVO: CEMENTERIO</div>
+                <div id="mapa-gps-activo"></div>
+                <div id="distancia-gps">---</div>
+                <p style="font-size:10px; color:#ff6600;" id="lbl-status">BUSCANDO SEÑAL...</p>
+                <button class="btn-motmot" style="border-color:#444; color:#666; margin-top:20px;" onclick="llegamos()">OMITIR (DEBUG)</button>
+            </div>
+
+            <div id="step-videos" class="caja-contenedor" style="display:none;">
                 <div class="etiqueta-evidencia">EVIDENCIA VISUAL</div>
-                <div class="caja-contenedor">
-                    <video id="vid1" class="video-evidencia activo" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-5.mp4" playsinline muted loop></video>
-                    <video id="vid2" class="video-evidencia" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-2.mp4" playsinline muted loop></video>
-                    <video id="vid3" class="video-evidencia" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-1.mp4" playsinline muted loop></video>
-                    <video id="vid4" class="video-evidencia" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-4.mp4" playsinline muted loop></video>
-                    <video id="vid5" class="video-evidencia" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-6_compressed.mp4" playsinline muted loop></video>
-                    
-                    <button id="btn-next" class="btn-motmot" onclick="siguienteVideo()">SIGUIENTE PRUEBA >></button>
-                </div>
+                <video id="vid1" class="video-evidencia" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-5.mp4" playsinline muted loop></video>
+                <video id="vid2" class="video-evidencia" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-2.mp4" playsinline muted loop></video>
+                <video id="vid3" class="video-evidencia" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-1.mp4" playsinline muted loop></video>
+                <video id="vid4" class="video-evidencia" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-4.mp4" playsinline muted loop></video>
+                <video id="vid5" class="video-evidencia" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-6_compressed.mp4" playsinline muted loop></video>
+                
+                <button id="btn-next-vid" class="btn-motmot" onclick="siguienteVideo()">SIGUIENTE PRUEBA >></button>
             </div>
 
-            <div id="seccion-escaner" style="display:none; width:100%; flex-direction:column; align-items:center;">
-                <div class="etiqueta-evidencia">BUSCAR CÓDIGO</div>
-                <div class="caja-contenedor">
-                    <p style="font-size:12px; color:#ccc; margin-bottom:10px;">Busca el código en la entrada o alrededores.</p>
-                    <div id="scan-container">
-                        <div id="reader"></div>
-                        <div class="laser"></div>
-                    </div>
-                    <button id="btn-activar" class="btn-motmot" onclick="activarCamara()">ENCENDER CÁMARA</button>
-                    <p style="margin-top:10px; font-size:10px; color:#444; text-decoration:underline; cursor:pointer;" onclick="irAValidacionFisica()">Saltar (Debug)</p>
+            <div id="step-scanner" class="caja-contenedor" style="display:none;">
+                <div class="etiqueta-evidencia" id="lbl-scan">BUSCAR CÓDIGO</div>
+                <p style="font-size:11px; color:#ccc; margin-bottom:10px;" id="txt-scan">Busca el código QR en la entrada o alrededores.</p>
+                <div id="scan-container">
+                    <div id="reader"></div>
+                    <div class="laser"></div>
                 </div>
+                <button class="btn-motmot" onclick="activarCamara()" id="btn-cam">ACTIVAR CÁMARA</button>
+                <p style="margin-top:10px; font-size:10px; text-decoration:underline; cursor:pointer;" onclick="irAQuiz()">Saltar (Error Cámara)</p>
             </div>
 
-            <div id="quiz-ventanas" style="display:none; width:100%; flex-direction:column; align-items:center;">
-                <div class="etiqueta-evidencia">PRUEBA DE CAMPO I</div>
-                <div class="caja-contenedor">
-                    <p style="font-size:14px; margin-bottom:20px;">Analiza la fachada frontal de piedra.<br><br><strong>¿Cuántas ventanas tiene?</strong></p>
-                    <button class="btn-opcion-azul" onclick="checkVentanas(7)">7 VENTANAS</button>
-                    <button class="btn-opcion-azul" onclick="checkVentanas(6)">6 VENTANAS</button>
-                    <button class="btn-opcion-azul" onclick="checkVentanas(8)">8 VENTANAS</button>
-                </div>
+            <div id="step-quiz-1" class="caja-contenedor" style="display:none;">
+                <div class="etiqueta-evidencia">PRUEBA 1/3</div>
+                <p id="q1">Analiza la fachada frontal de piedra.<br><br><strong>¿Cuántas ventanas tiene?</strong></p>
+                <button class="btn-opcion-azul" onclick="checkQ1(7)">7 VENTANAS</button>
+                <button class="btn-opcion-azul" onclick="checkQ1(6)">6 VENTANAS</button>
+                <button class="btn-opcion-azul" onclick="checkQ1(8)">8 VENTANAS</button>
             </div>
 
-            <div id="quiz-angel" style="display:none; width:100%; flex-direction:column; align-items:center;">
-                <div class="etiqueta-evidencia">PRUEBA DE CAMPO II</div>
-                <div class="caja-contenedor">
-                    <p style="font-size:14px; margin-bottom:20px;">Frente al cementerio, a la derecha, sobre los muros exteriores...<br><br><strong>¿Qué figura destaca?</strong></p>
-                    <button class="btn-opcion-azul" onclick="checkAngel(true)">👼 Un Ángel tallado</button>
-                    <button class="btn-opcion-azul" onclick="checkAngel(false)">🔨 Un Martillo</button>
-                    <button class="btn-opcion-azul" onclick="checkAngel(false)">⭐ Una Estrella</button>
-                </div>
+            <div id="step-quiz-2" class="caja-contenedor" style="display:none;">
+                <div class="etiqueta-evidencia">PRUEBA 2/3</div>
+                <p id="q2">Muro exterior derecho...<br><br><strong>¿Qué figura destaca?</strong></p>
+                <button class="btn-opcion-azul" onclick="checkQ2(true)">👼 Un Ángel</button>
+                <button class="btn-opcion-azul" onclick="checkQ2(false)">🔨 Un Martillo</button>
+                <button class="btn-opcion-azul" onclick="checkQ2(false)">⭐ Una Estrella</button>
             </div>
 
-            <div id="quiz-final" style="display:none; width:100%; flex-direction:column; align-items:center;">
-                <div class="etiqueta-evidencia">IDENTIDAD MAESTRA</div>
-                <div class="caja-contenedor">
-                    <p style="font-size:14px; margin-bottom:20px;">Mira la parte superior del arco de la puerta principal.<br><br><strong>¿Qué símbolo corona la entrada?</strong></p>
-                    <button class="btn-opcion-azul" onclick="validarFinal(true, this)">✝️ La Cruz de Piedra</button>
-                    <button class="btn-opcion-azul" onclick="validarFinal(false, this)">🕊️ Una Paloma</button>
-                </div>
+            <div id="step-quiz-3" class="caja-contenedor" style="display:none;">
+                <div class="etiqueta-evidencia">PRUEBA FINAL</div>
+                <p id="q3">Sobre el arco de la puerta principal...<br><br><strong>¿Qué símbolo hay?</strong></p>
+                <button class="btn-opcion-azul" onclick="validarFinal(true, this)">✝️ La Cruz de Piedra</button>
+                <button class="btn-opcion-azul" onclick="validarFinal(false, this)">🕊️ Una Paloma</button>
             </div>
 
         </div>
 
         <div class="col-mapa">
-            <div id="mapa-cementerio"></div>
-            <div style="position:absolute; bottom:20px; left:20px; background:rgba(0,0,0,0.8); padding:10px; border-left:3px solid #ff6600; z-index:999;">
-                <strong style="color:#ff6600; font-size:12px;">UBICACIÓN OBJETIVO</strong><br>
-                <span style="font-size:10px;">Cementerio de Barichara<br>Cra. 7 #21 a 2-77</span>
-            </div>
+            <div id="mapa-referencia"></div>
         </div>
 
     </div>
@@ -193,34 +182,61 @@
 <script>
     // --- CONFIGURACIÓN ---
     const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec";
-    const CEMENTERIO_COORDS = { lat: 6.637370, lon: -73.227285 }; // Coordenadas aproximadas Cementerio Barichara
+    const DESTINO = { lat: 6.637370, lon: -73.227285 }; // Cementerio Barichara
 
+    // --- IDIOMAS ---
+    let idioma = localStorage.getItem('motmot_lang') || 'es';
+    const TEXTOS = {
+        es: {
+            titulo: "PISTA 4: EL DESCANSO",
+            intro: "\"Donde el silencio habla más fuerte que las palabras. Dirígete al lugar del descanso eterno.\"",
+            btn_start: "INICIAR RASTREO",
+            obj: "OBJETIVO: CEMENTERIO",
+            status: "BUSCANDO SEÑAL...",
+            scan_title: "BUSCAR CÓDIGO",
+            scan_txt: "Busca el código QR en la entrada o alrededores.",
+            btn_cam: "ACTIVAR CÁMARA",
+            q1: "Analiza la fachada frontal de piedra.<br><br><strong>¿Cuántas ventanas tiene?</strong>",
+            q2: "Muro exterior derecho...<br><br><strong>¿Qué figura destaca?</strong>",
+            q3: "Sobre el arco de la puerta principal...<br><br><strong>¿Qué símbolo hay?</strong>"
+        },
+        en: {
+            titulo: "CLUE 4: THE REST",
+            intro: "\"Where silence speaks louder than words. Head to the place of eternal rest.\"",
+            btn_start: "START TRACKING",
+            obj: "TARGET: CEMETERY",
+            status: "SEARCHING SIGNAL...",
+            scan_title: "SCAN CODE",
+            scan_txt: "Find the QR code at the entrance or surroundings.",
+            btn_cam: "ACTIVATE CAMERA",
+            q1: "Analyze the front stone facade.<br><br><strong>How many windows are there?</strong>",
+            q2: "Right exterior wall...<br><br><strong>Which figure stands out?</strong>",
+            q3: "Above the main door arch...<br><br><strong>What symbol is there?</strong>"
+        }
+    };
+
+    let mapGPS, mapRef, watchID, html5QrCode;
     let videoIndex = 1;
-    let html5QrCode;
     let musica = document.getElementById('musica-ambiente');
-    let map;
 
-    // --- CARGA Y GUARDIÁN ---
+    // --- CARGA ---
     window.onload = () => {
+        aplicarIdioma();
+        initMapRef(); // Mapa derecho (PC)
+        
+        // Guardián
         verificarPantalla();
         window.addEventListener("resize", verificarPantalla);
-        // Inicializar mapa aunque esté oculto en móvil (por si giran el cel)
-        initMap(); 
-        
-        // Anti-salida (Solo activamos la pausa si pierden foco, no por rotación)
         document.addEventListener("visibilitychange", () => {
              if (document.hidden) document.getElementById('aviso-pausa').style.display = 'flex';
         });
     };
 
     function verificarPantalla() {
-        // En esta pista NO bloqueamos rotación, permitimos ambas.
-        // Solo verificamos fullscreen si es móvil.
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const isFullScreen = document.fullscreenElement || document.webkitFullscreenElement;
-        
-        if (isMobile && !isFullScreen && document.getElementById('fase-inicio').style.display === 'none') {
-            // Solo mostramos pausa si ya empezó el juego y perdió fullscreen
+        // Solo pausar si es móvil, no es fullscreen y ya pasamos la intro
+        if (isMobile && !isFullScreen && document.getElementById('step-intro').style.display === 'none') {
              document.getElementById('aviso-pausa').style.display = 'flex';
         }
     }
@@ -230,28 +246,70 @@
         if(el.requestFullscreen) el.requestFullscreen().catch(e=>{});
         else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen().catch(e=>{});
         document.getElementById('aviso-pausa').style.display = 'none';
+        if(document.getElementById('step-intro').style.display === 'none') musica.play();
+    }
+
+    function aplicarIdioma() {
+        const t = TEXTOS[idioma];
+        document.getElementById('lbl-titulo').innerText = t.titulo;
+        document.getElementById('txt-intro').innerText = t.intro;
+        document.getElementById('btn-start').innerText = t.btn_start;
+        document.getElementById('lbl-obj').innerText = t.obj;
+        document.getElementById('lbl-status').innerText = t.status;
+        document.getElementById('lbl-scan').innerText = t.scan_title;
+        document.getElementById('txt-scan').innerText = t.scan_txt;
+        document.getElementById('btn-cam').innerText = t.btn_cam;
+        document.getElementById('q1').innerHTML = t.q1;
+        document.getElementById('q2').innerHTML = t.q2;
+        document.getElementById('q3').innerHTML = t.q3;
+    }
+
+    // --- MAPAS ---
+    function initMapRef() {
+        // Mapa estático columna derecha
+        mapRef = L.map('mapa-referencia', { zoomControl: false, attributionControl: false }).setView([DESTINO.lat, DESTINO.lon], 18);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapRef);
+        L.marker([DESTINO.lat, DESTINO.lon]).addTo(mapRef);
+    }
+
+    function initMapGPS() {
+        // Mapa activo columna izquierda
+        mapGPS = L.map('mapa-gps-activo', { zoomControl: false, attributionControl: false }).setView([DESTINO.lat, DESTINO.lon], 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapGPS);
+        const icon = L.divIcon({ html: '<div style="background:#ff6600; width:15px; height:15px; border-radius:50%; border:2px solid white;"></div>', className: '' });
+        L.marker([DESTINO.lat, DESTINO.lon], {icon: icon}).addTo(mapGPS);
+    }
+
+    // --- FLUJO ---
+    function iniciarGPS() {
+        reanudarJuego();
+        document.getElementById('step-intro').style.display = 'none';
+        document.getElementById('step-gps').style.display = 'block';
+        initMapGPS();
         musica.play();
+
+        if (navigator.geolocation) {
+            watchID = navigator.geolocation.watchPosition(pos => {
+                const d = calcularDistancia(pos.coords.latitude, pos.coords.longitude, DESTINO.lat, DESTINO.lon);
+                document.getElementById('distancia-gps').innerText = Math.round(d) + "m";
+                if(d < 30) llegamos();
+            }, null, { enableHighAccuracy: true });
+        }
     }
 
-    // --- MAPA LEAFLET ---
-    function initMap() {
-        map = L.map('mapa-cementerio', { zoomControl: false, attributionControl: false }).setView([CEMENTERIO_COORDS.lat, CEMENTERIO_COORDS.lon], 17);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        
-        // Marcador Personalizado
-        const icon = L.divIcon({ 
-            html: '<div style="background:#ff6600; width:15px; height:15px; border-radius:50%; border:2px solid white; box-shadow: 0 0 15px #ff6600;"></div>', 
-            className: '' 
-        });
-        L.marker([CEMENTERIO_COORDS.lat, CEMENTERIO_COORDS.lon], {icon: icon}).addTo(map)
-        .bindPopup("Cementerio de Barichara").openPopup();
+    function calcularDistancia(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+        const dLat = (lat2-lat1) * Math.PI/180;
+        const dLon = (lon2-lon1) * Math.PI/180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
-    // --- LÓGICA JUEGO ---
-    function iniciarMision() {
-        reanudarJuego(); // Activa fullscreen y audio
-        document.getElementById('fase-inicio').style.display = "none";
-        document.getElementById('seccion-videos').style.display = "flex";
+    function llegamos() {
+        if(watchID) navigator.geolocation.clearWatch(watchID);
+        document.getElementById('step-gps').style.display = 'none';
+        document.getElementById('step-videos').style.display = 'block';
+        document.getElementById('vid1').classList.add('activo');
         document.getElementById('vid1').play();
     }
 
@@ -260,56 +318,48 @@
             let actual = document.getElementById('vid'+videoIndex);
             actual.pause();
             actual.classList.remove('activo');
-            
             videoIndex++;
             let next = document.getElementById('vid'+videoIndex);
             next.classList.add('activo');
             next.play();
-
-            if(videoIndex === 5) document.getElementById('btn-next').innerText = "FINALIZAR ANÁLISIS";
         } else {
-            document.getElementById('seccion-videos').style.display = "none";
-            document.getElementById('seccion-escaner').style.display = "flex";
+            // Fin videos -> Scanner
+            document.getElementById('step-videos').style.display = 'none';
+            document.getElementById('step-scanner').style.display = 'block';
         }
     }
 
     // --- ESCÁNER ---
     function activarCamara() {
-        document.getElementById('btn-activar').style.display = "none";
+        document.getElementById('btn-cam').style.display = 'none';
         html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start(
-            { facingMode: "environment" }, 
-            { fps: 15, qrbox: { width: 250, height: 250 } }, 
+        html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, 
             (text) => {
                 if(text.toUpperCase().includes("PISTA_04") || text.toUpperCase().includes("BARICHARA")) {
-                    html5QrCode.stop().then(() => irAValidacionFisica());
+                    html5QrCode.stop().then(irAQuiz);
                 }
             }
-        ).catch(err => { 
-            alert("Error cámara. Usa 'Saltar'."); 
-            document.getElementById('btn-activar').style.display = "block"; 
-        });
+        ).catch(() => { alert("Error cámara"); document.getElementById('btn-cam').style.display='block'; });
     }
 
-    function irAValidacionFisica() {
-        if(html5QrCode && html5QrCode.isScanning) { html5QrCode.stop(); }
-        document.getElementById('seccion-escaner').style.display = "none";
-        document.getElementById('quiz-ventanas').style.display = "flex";
+    function irAQuiz() {
+        if(html5QrCode && html5QrCode.isScanning) html5QrCode.stop();
+        document.getElementById('step-scanner').style.display = 'none';
+        document.getElementById('step-quiz-1').style.display = 'block';
     }
 
-    // --- QUIZZES ---
-    function checkVentanas(num) {
-        if(num === 7) {
-            document.getElementById('quiz-ventanas').style.display = "none";
-            document.getElementById('quiz-angel').style.display = "flex";
-        } else { alert("Incorrecto. Cuenta bien las ventanas frontales."); }
+    // --- QUIZ ---
+    function checkQ1(n) {
+        if(n === 7) {
+            document.getElementById('step-quiz-1').style.display = 'none';
+            document.getElementById('step-quiz-2').style.display = 'block';
+        } else alert("Error. Cuenta bien.");
     }
-
-    function checkAngel(isCorrect) {
-        if(isCorrect) {
-            document.getElementById('quiz-angel').style.display = "none";
-            document.getElementById('quiz-final').style.display = "flex";
-        } else { alert("Incorrecto. Busca en el muro derecho exterior."); }
+    function checkQ2(ok) {
+        if(ok) {
+            document.getElementById('step-quiz-2').style.display = 'none';
+            document.getElementById('step-quiz-3').style.display = 'block';
+        } else alert("Incorrecto. Mira el muro derecho.");
     }
 
     function validarFinal(ok, el) {
@@ -318,24 +368,18 @@
             document.getElementById('flash-efecto').style.display = "block";
             document.getElementById('snd-exito').play();
             musica.pause();
-
-            // Guardar Progreso (Pista 5)
-            localStorage.setItem('motmot_pista', 5); 
-
-            // Google Sheets
+            localStorage.setItem('motmot_pista', 5);
+            
             const usuario = localStorage.getItem('motmot_clave');
             if(usuario) {
-                const urlFinal = `${URL_GOOGLE}?action=guardar_progreso&codigo=${usuario}&pista=5`;
-                ejecutarJSONP(urlFinal, () => {
-                     setTimeout(() => { window.location.href = "index.html"; }, 3000);
-                });
+                const url = `${URL_GOOGLE}?action=guardar_progreso&codigo=${usuario}&pista=5`;
+                ejecutarJSONP(url, () => setTimeout(() => window.location.href = "index.html", 3000));
             } else {
-                setTimeout(() => { window.location.href = "index.html"; }, 3000);
+                setTimeout(() => window.location.href = "index.html", 3000);
             }
-
         } else {
             el.style.background = "#c0392b";
-            setTimeout(() => { el.style.background = "#1a1a1a"; }, 1000);
+            setTimeout(() => el.style.background = "#1a1a1a", 1000);
         }
     }
 
