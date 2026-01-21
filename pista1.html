@@ -2,20 +2,181 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Misión 1: El Inicio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Misión 1 | Barichara</title>
+    
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
     <style>
-        body { background-color: #000; color: white; font-family: Verdana, sans-serif; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        h1 { color: #ff6600; text-transform: uppercase; letter-spacing: 2px; }
-        p { max-width: 80%; line-height: 1.5; color: #ccc; }
-        .btn-volver { margin-top: 30px; padding: 10px 20px; border: 1px solid #ff6600; background: none; color: #ff6600; border-radius: 30px; text-decoration: none; text-transform: uppercase; font-size: 12px; }
+        /* --- ESTILOS VISUALES (IDÉNTICOS AL INDEX) --- */
+        :root { --naranja: #ff6600; --verde: #00cc66; --negro: #000; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100vh; width: 100vw; font-family: 'Verdana', sans-serif; overflow: hidden; }
+
+        /* Capas */
+        .capa { 
+            position: absolute; inset: 0; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            padding: 20px; text-align: center; 
+            background: var(--negro); 
+        }
+        
+        /* Ocultar capa de escáner por defecto */
+        #capa-escaner { display: none; z-index: 20; background: rgba(0,0,0,0.95); }
+        .activa { display: flex !important; }
+
+        /* Fondo de Video */
+        .video-bg { position: absolute; z-index: -1; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: brightness(0.7); }
+
+        /* Textos */
+        .titulo-principal { font-size: 24px; letter-spacing: 3px; color: var(--naranja); margin: 5px 0; text-transform: uppercase; }
+        .subtitulo { font-size: 11px; opacity: 0.8; letter-spacing: 4px; margin: 10px 0; text-transform: uppercase; color: #ccc; }
+        .texto-pista { font-size: 15px; line-height: 1.6; max-width: 500px; margin: 20px 0; color: #eee; }
+
+        /* Botones */
+        .btn-mot { 
+            background: transparent; border: 2px solid var(--naranja); color: var(--naranja); 
+            padding: 12px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; 
+            text-transform: uppercase; width: auto; min-width: 220px; font-size: 14px; 
+            margin-top: 15px; transition: 0.3s; letter-spacing: 2px;
+        }
+        .btn-mot:active { background: var(--naranja); color: #000; transform: scale(0.95); }
+
+        /* Escáner */
+        #reader { width: 100%; max-width: 400px; border: 2px solid var(--naranja); border-radius: 10px; overflow: hidden; }
+
+        /* Modal Alerta */
+        #capa-alerta { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200000; display: none; align-items: center; justify-content: center; }
+        .modal-caja { background: #111; border: 2px solid var(--naranja); border-radius: 15px; padding: 30px; max-width: 90%; width: 350px; text-align: center; box-shadow: 0 0 30px rgba(255,102,0,0.2); }
     </style>
 </head>
 <body>
-    <h1>🎯 Pista 1</h1>
-    <p>¡Conexión Exitosa!</p>
-    <p>Aquí pondremos tu video y el escáner de la primera misión.</p>
-    
-    <a href="index.html" class="btn-volver">Volver al Tablero</a>
+
+    <div id="capa-alerta">
+        <div class="modal-caja">
+            <h3 id="alerta-titulo" style="color:var(--naranja); margin-top:0;">AVISO</h3>
+            <p id="alerta-texto" style="color:#ddd; margin: 20px 0;">Mensaje...</p>
+            <button class="btn-mot" onclick="cerrarAlerta()" style="margin-top:0; border-color:#555; color:#fff; font-size:12px;">ENTENDIDO</button>
+        </div>
+    </div>
+
+    <div id="capa-contenido" class="capa">
+        <video class="video-bg" autoplay loop muted playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
+        
+        <p class="subtitulo" style="color:var(--verde);">OBJETIVO ACTIVO</p>
+        <h1 class="titulo-principal">PISTA 1</h1>
+        
+        <div class="texto-pista">
+            <p>Bienvenido a Barichara, explorador.</p>
+            <p>Tu primera misión es encontrar el <strong>"Lugar de la Piedra"</strong>. Busca en el parque principal el monumento a los talladores.</p>
+            <p>Allí encontrarás un código QR oculto.</p>
+        </div>
+
+        <button class="btn-mot" onclick="abrirEscaner()">📸 YA LO ENCONTRÉ</button>
+        
+        <button onclick="window.location.href='index.html'" style="background:none; border:none; color:#777; margin-top:20px; text-decoration:underline; font-size:11px; cursor:pointer;">
+            ⬅ Volver al Tablero
+        </button>
+    </div>
+
+    <div id="capa-escaner" class="capa">
+        <h3 style="color:var(--naranja); letter-spacing:3px; margin-bottom:20px;">ESCANEAR QR</h3>
+        <div id="reader"></div>
+        <button class="btn-mot" onclick="cerrarEscaner()" style="border-color:#555; color:#aaa; margin-top:20px;">CANCELAR</button>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN
+        const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec";
+        
+        // ¡IMPORTANTE! Este es el código que debe tener el QR físico de la Pista 1
+        const CODIGO_META = "BARICHARA_PISTA_01"; 
+
+        let html5QrcodeScanner = null;
+
+        // --- LÓGICA DEL ESCÁNER ---
+        function abrirEscaner() {
+            document.getElementById('capa-contenido').style.display = 'none';
+            document.getElementById('capa-escaner').style.display = 'flex';
+            
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+            .catch(err => {
+                mostrarAlerta("No se pudo iniciar la cámara. Revisa los permisos.", "ERROR CÁMARA");
+                cerrarEscaner();
+            });
+        }
+
+        function cerrarEscaner() {
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner.clear();
+                    document.getElementById('capa-escaner').style.display = 'none';
+                    document.getElementById('capa-contenido').style.display = 'flex';
+                }).catch(err => console.log(err));
+            }
+        }
+
+        function onScanSuccess(decodedText) {
+            // Detener escáner
+            html5QrcodeScanner.stop().then(() => {
+                document.getElementById('capa-escaner').style.display = 'none';
+                document.getElementById('capa-contenido').style.display = 'flex';
+                
+                validarCodigo(decodedText);
+            });
+        }
+
+        // --- VALIDACIÓN Y GUARDADO ---
+        function validarCodigo(texto) {
+            console.log("Escaneado:", texto);
+
+            if (texto === CODIGO_META) {
+                mostrarAlerta("¡Código Correcto! Sincronizando datos...", "¡EXCELENTE!");
+                
+                // 1. Actualizar memoria local para que el celular sepa que va en la 2
+                localStorage.setItem('motmot_pista', 2);
+
+                // 2. Guardar en la Nube (Google Sheets)
+                guardarEnNube();
+            } else {
+                mostrarAlerta("Ese no es el código correcto. Sigue buscando.", "ERROR");
+            }
+        }
+
+        function guardarEnNube() {
+            const usuario = localStorage.getItem('motmot_clave'); // Tu código de equipo (ej: TEAM01)
+            
+            // Llamada al script de Google (Action: guardar_progreso)
+            const urlFinal = `${URL_GOOGLE}?action=guardar_progreso&codigo=${usuario}&pista=2`;
+            
+            ejecutarJSONP(urlFinal, (data) => {
+                // No importa mucho si responde success o error, lo importante es que el usuario avance
+                // Redirigir al index para que el cerebro cargue la Pista 2
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500); 
+            });
+        }
+
+        // --- UTILIDADES ---
+        function ejecutarJSONP(url, callback) {
+            const cbName = 'jsonp_' + Math.round(100000 * Math.random());
+            window[cbName] = (data) => { delete window[cbName]; document.body.removeChild(script); callback(data); };
+            const script = document.createElement('script');
+            script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cbName;
+            document.body.appendChild(script);
+        }
+
+        function mostrarAlerta(msg, titulo) {
+            document.getElementById('alerta-titulo').innerText = titulo || "AVISO";
+            document.getElementById('alerta-texto').innerText = msg;
+            document.getElementById('capa-alerta').style.display = 'flex';
+        }
+        function cerrarAlerta() { document.getElementById('capa-alerta').style.display = 'none'; }
+    </script>
 </body>
 </html>
