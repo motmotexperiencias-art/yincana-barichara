@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
-        /* --- ESTILOS VISUALES (TU DISEÑO 50/50) --- */
+        /* --- ESTILOS VISUALES --- */
         body, html { margin: 0; padding: 0; background: #000; color: white; height: 100vh; width: 100vw; font-family: 'Verdana', sans-serif; overflow: hidden; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -21,7 +21,7 @@
         .col-media { flex: 1; position: relative; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }
         .col-text { flex: 1; background: #080808; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5% 20px; text-align: center; border-left: 2px solid #222; }
 
-        /* MÓVIL VERTICAL */
+        /* MÓVIL VERTICAL (CSS Fallback) */
         @media screen and (max-width: 768px) and (orientation: portrait) {
             #zona-juego { flex-direction: column; }
             .col-text { border-left: none; border-top: 2px solid #222; }
@@ -42,14 +42,18 @@
         .btn-motmot { background: transparent; border: 1px solid #ff6600; color: #ff6600; padding: 12px 30px; border-radius: 50px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; font-size: 12px; font-weight: bold; transition: 0.3s; margin-top: 10px; }
         .btn-motmot:active { background: #ff6600; color: #000; transform: scale(0.95); }
 
-        /* EXTRAS: Loader, Rotación, Flash */
-        #loader-global { position: absolute; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        /* CAPAS DE AVISO (Rotación y Fullscreen) */
+        .capa-aviso { position: fixed; inset: 0; background: #000; z-index: 8000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        
+        /* Aviso Vertical: Se muestra solo si la orientación es portrait */
+        @media screen and (orientation: portrait) { 
+            #aviso-vertical { display: flex !important; z-index: 9000; } 
+        }
+
+        /* Iconos animados */
+        .icon-rotate { width: 50px; height: 50px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 2s infinite; margin-bottom: 20px; font-size: 30px; line-height: 50px; color:white; }
         .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,102,0,0.3); border-top: 4px solid #ff6600; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        #aviso-vertical { position: absolute; inset: 0; background: #000; z-index: 8000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        @media screen and (orientation: landscape) { #aviso-vertical { display: none !important; } }
-        .icon-rotate { width: 50px; height: 50px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 2s infinite; margin-bottom: 20px; font-size: 30px; line-height: 50px; }
 
         /* SCANNER */
         #scan-overlay { position: absolute; inset: 0; background: #000; z-index: 6000; display: none; flex-direction: column; align-items: center; justify-content: center; }
@@ -66,17 +70,22 @@
 </head>
 <body>
 
-    <div id="loader-global">
+    <div id="loader-global" class="capa-aviso" style="display:flex; z-index:9999;">
         <div class="spinner"></div>
         <p style="color:#ff6600; font-size:10px; letter-spacing:2px;">CARGANDO / LOADING...</p>
     </div>
 
     <div id="camera-flash"></div>
 
-    <div id="aviso-vertical">
-        <div class="icon-rotate">📱</div>
+    <div id="aviso-vertical" class="capa-aviso">
+        <div class="icon-rotate">↻</div>
         <p style="font-size:12px; letter-spacing:1px; color:#fff;">GIRA EL CELULAR / ROTATE DEVICE</p>
-        <button class="btn-motmot" style="margin-top:20px; border-color:#fff; color:#fff;" onclick="forzarFullScreen()">FULL SCREEN</button>
+    </div>
+
+    <div id="aviso-fullscreen" class="capa-aviso" style="background:rgba(0,0,0,0.9);">
+        <h2 style="color:#ff6600; letter-spacing:2px;">PAUSA</h2>
+        <p style="color:#ccc; font-size:12px; margin-bottom:30px;">Toca para continuar en Pantalla Completa</p>
+        <button class="btn-motmot" onclick="forzarFullScreen()">CONTINUAR JUEGO</button>
     </div>
     
     <div id="capa-alerta">
@@ -105,8 +114,7 @@
                 </div>
                 <div style="position:absolute; z-index:10; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
                     <div id="intro-text" style="text-align:center; display:none;">
-                        <p id="txt-intro" class="texto-narrativo" style="text-shadow: 2px 2px 5px black;">
-                            </p>
+                        <p id="txt-intro" class="texto-narrativo" style="text-shadow: 2px 2px 5px black;"></p>
                         <button id="btn-ver-pista" class="btn-motmot" onclick="cambiarPaso('step-intro', 'step-mapa')">VER PISTA</button>
                     </div>
                 </div>
@@ -117,8 +125,7 @@
                     <img src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/22222.png" class="img-contain">
                 </div>
                 <div class="col-text">
-                    <p id="txt-mapa" class="texto-narrativo">
-                        </p>
+                    <p id="txt-mapa" class="texto-narrativo"></p>
                     <button id="btn-llegue" class="btn-motmot" onclick="cambiarPaso('step-mapa', 'step-pos')">YA LLEGUÉ</button>
                 </div>
             </div>
@@ -128,8 +135,7 @@
                     <video class="media-item" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/Diseno-sin-titulo-5.mp4" playsinline muted loop autoplay></video>
                 </div>
                 <div class="col-text">
-                    <p id="txt-pos" class="texto-narrativo">
-                         </p>
+                    <p id="txt-pos" class="texto-narrativo"></p>
                     <button id="btn-listo" class="btn-motmot" onclick="cambiarPaso('step-pos', 'step-historia'); playHistoria();">ESTOY LISTO</button>
                 </div>
             </div>
@@ -149,8 +155,7 @@
                     <video class="media-item" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/Diseno-sin-titulo-6.mp4" playsinline muted loop autoplay></video>
                 </div>
                 <div class="col-text">
-                    <p id="txt-final" class="texto-narrativo">
-                         </p>
+                    <p id="txt-final" class="texto-narrativo"></p>
                     <button id="btn-escanear" class="btn-motmot" onclick="abrirScanner()">ESCANEAR</button>
                 </div>
             </div>
@@ -169,7 +174,7 @@
         const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec";
         const CODIGO_META = "BARICHARA_PISTA_01"; 
 
-        // --- DICCIONARIO DE IDIOMAS ---
+        // --- IDIOMAS ---
         const TEXTOS = {
             es: {
                 btn_start: "INICIAR PISTA #1",
@@ -217,20 +222,46 @@
             }
         };
 
-        // Variables Globales
         let idioma = localStorage.getItem('motmot_lang') || 'es';
         let html5QrCode = null;
         let historiaIdx = 0;
 
-        // --- CARGA Y CONFIGURACIÓN ---
+        // --- CARGA ---
         window.addEventListener('load', () => {
             aplicarIdioma();
             setTimeout(() => { document.getElementById('loader-global').style.display = 'none'; }, 1500);
+            
+            // Listeners para pantalla completa
+            document.addEventListener("fullscreenchange", checkFullScreen);
+            document.addEventListener("webkitfullscreenchange", checkFullScreen);
+            window.addEventListener("resize", checkFullScreen); // Detectar rotación
         });
 
+        // --- CONTROL DE PANTALLA ---
+        function forzarFullScreen() {
+            let doc = document.documentElement;
+            if(doc.requestFullscreen) doc.requestFullscreen();
+            else if(doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
+            
+            // Ocultar capa de aviso manual
+            document.getElementById('aviso-fullscreen').style.display = 'none';
+        }
+
+        function checkFullScreen() {
+            const isLandscape = window.innerWidth > window.innerHeight;
+            const isFS = document.fullscreenElement || document.webkitFullscreenElement;
+            
+            // Lógica: Si está Horizontal PERO no está Fullscreen -> Mostrar aviso
+            if(isLandscape && !isFS) {
+                document.getElementById('aviso-fullscreen').style.display = 'flex';
+            } else {
+                document.getElementById('aviso-fullscreen').style.display = 'none';
+            }
+        }
+
+        // --- FUNCIONES DEL JUEGO ---
         function aplicarIdioma() {
             const t = TEXTOS[idioma];
-            // Botones e instrucciones estáticas
             document.getElementById('btn-start').innerText = t.btn_start;
             document.getElementById('txt-intro').innerHTML = t.intro;
             document.getElementById('btn-ver-pista').innerText = t.btn_ver;
@@ -245,32 +276,22 @@
             document.getElementById('btn-cancelar').innerText = t.btn_cancel;
         }
 
-        function forzarFullScreen() {
-            let doc = document.documentElement;
-            if(doc.requestFullscreen) doc.requestFullscreen();
-            else if(doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
-        }
-
         function cambiarPaso(actual, siguiente) {
             document.getElementById(actual).style.display = 'none';
-            document.getElementById(siguiente).style.display = 'flex'; // IMPORTANTE: Flex para mantener diseño 50/50
+            document.getElementById(siguiente).style.display = 'flex'; 
         }
 
-        // --- FLUJO ---
         function iniciarMision() {
             forzarFullScreen();
             document.getElementById('step-start').style.display = 'none';
-            document.getElementById('step-intro').style.display = 'block'; // Block porque es absoluto
+            document.getElementById('step-intro').style.display = 'block'; 
             document.getElementById('vid-1').play();
-            
-            // Sonido y texto tras 4 segs
             setTimeout(() => { 
                 document.getElementById('intro-text').style.display = 'block'; 
                 document.getElementById('snd-flute').play(); 
             }, 4000);
         }
 
-        // --- HISTORIA SECUENCIAL ---
         function playHistoria() {
             historiaIdx = 0;
             document.getElementById('txt-historia-dinamico').innerText = TEXTOS[idioma].historia[0];
@@ -285,20 +306,14 @@
             }
         }
 
-        // --- ESCÁNER Y LÓGICA DE DATOS ---
+        // --- SCANNER ---
         function abrirScanner() {
             document.getElementById('scan-overlay').style.display = 'flex';
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 },
                 (text) => {
-                    // Verificación si encuentra el código correcto
                     if(text.includes(CODIGO_META)) {
-                        html5QrCode.stop().then(() => {
-                            exito();
-                        });
-                    } else {
-                        // Opcional: Avisar si es incorrecto (pero sin detener el escáner necesariamente)
-                        // console.log("Código incorrecto: " + text);
+                        html5QrCode.stop().then(() => { exito(); });
                     }
                 }
             ).catch(err => alert("Error cámara: " + err));
@@ -311,30 +326,21 @@
 
         function exito() {
             document.getElementById('snd-exito').play();
-            document.getElementById('camera-flash').style.display = 'block'; // Flash blanco
-            
-            // 1. Mostrar mensaje éxito
+            document.getElementById('camera-flash').style.display = 'block'; 
             mostrarAlerta(TEXTOS[idioma].alerta_ok);
-
-            // 2. Guardar en LocalStorage
             localStorage.setItem('motmot_pista', 2);
-
-            // 3. Guardar en Google Sheets
+            
             const usuario = localStorage.getItem('motmot_clave');
             if(usuario) {
                 const urlFinal = `${URL_GOOGLE}?action=guardar_progreso&codigo=${usuario}&pista=2`;
                 ejecutarJSONP(urlFinal, (data) => {
-                    console.log("Progreso guardado");
-                    // 4. Redirigir al cerebro (index.html)
                     setTimeout(() => { window.location.href = "index.html"; }, 2000);
                 });
             } else {
-                // Si no hay usuario (pruebas), redirige igual
                 setTimeout(() => { window.location.href = "index.html"; }, 2000);
             }
         }
 
-        // --- UTILIDADES ---
         function ejecutarJSONP(url, callback) {
             const cbName = 'jsonp_' + Math.round(100000 * Math.random());
             window[cbName] = (data) => { delete window[cbName]; document.body.removeChild(script); callback(data); };
