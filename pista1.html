@@ -3,163 +3,335 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
     <title>Misión 1 | Barichara</title>
     
     <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
-        /* --- ESTILOS VISUALES (IDÉNTICOS AL INDEX) --- */
-        :root { --naranja: #ff6600; --verde: #00cc66; --negro: #000; }
+        /* --- ESTILOS VISUALES (TU DISEÑO 50/50) --- */
+        body, html { margin: 0; padding: 0; background: #000; color: white; height: 100vh; width: 100vw; font-family: 'Verdana', sans-serif; overflow: hidden; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100vh; width: 100vw; font-family: 'Verdana', sans-serif; overflow: hidden; }
 
-        /* Capas */
-        .capa { 
-            position: absolute; inset: 0; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            padding: 20px; text-align: center; 
-            background: var(--negro); 
+        #app-juego { position: fixed; inset: 0; background: #000; z-index: 10; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+
+        /* LAYOUT 50/50 */
+        #zona-juego { width: 100%; height: 100%; display: flex; flex-direction: row; }
+        .col-media { flex: 1; position: relative; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }
+        .col-text { flex: 1; background: #080808; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5% 20px; text-align: center; border-left: 2px solid #222; }
+
+        /* MÓVIL VERTICAL */
+        @media screen and (max-width: 768px) and (orientation: portrait) {
+            #zona-juego { flex-direction: column; }
+            .col-text { border-left: none; border-top: 2px solid #222; }
         }
+
+        /* MEDIA */
+        .media-item { width: 100%; height: 100%; object-fit: cover; }
+        .img-contain { width: 100%; height: 100%; object-fit: contain; background: #000; }
+        .video-paneo { width: 100%; height: 100%; object-fit: cover; animation: paneo 15s ease-out forwards; }
+        @keyframes paneo { 0% { transform: scale(1.2); object-position: 50% 100%; } 100% { transform: scale(1); object-position: 50% 20%; } }
+        .capa-oscura { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); pointer-events: none; }
+
+        /* TEXTOS */
+        .texto-narrativo { font-size: clamp(11px, 2.5vh, 16px); line-height: 1.5; color: #ddd; margin-bottom: 3vh; font-weight: 300; max-width: 90%; }
+        .destacado { color: #ff6600; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* BOTONES */
+        .btn-motmot { background: transparent; border: 1px solid #ff6600; color: #ff6600; padding: 12px 30px; border-radius: 50px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; font-size: 12px; font-weight: bold; transition: 0.3s; margin-top: 10px; }
+        .btn-motmot:active { background: #ff6600; color: #000; transform: scale(0.95); }
+
+        /* EXTRAS: Loader, Rotación, Flash */
+        #loader-global { position: absolute; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,102,0,0.3); border-top: 4px solid #ff6600; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        #aviso-vertical { position: absolute; inset: 0; background: #000; z-index: 8000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        @media screen and (orientation: landscape) { #aviso-vertical { display: none !important; } }
+        .icon-rotate { width: 50px; height: 50px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 2s infinite; margin-bottom: 20px; font-size: 30px; line-height: 50px; }
+
+        /* SCANNER */
+        #scan-overlay { position: absolute; inset: 0; background: #000; z-index: 6000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #reader-wrapper { width: 250px; height: 250px; border: 2px solid #333; position: relative; background: #000; border-radius: 10px; overflow: hidden; }
+        #reader { width: 100%; height: 100%; }
+        .laser { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #ff6600; box-shadow: 0 0 10px #ff6600; animation: scanLaser 2s infinite; z-index: 10; }
+        @keyframes scanLaser { 0% { top: 0; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+        #camera-flash { position: absolute; inset: 0; background: white; z-index: 9000; display: none; }
         
-        /* Ocultar capa de escáner por defecto */
-        #capa-escaner { display: none; z-index: 20; background: rgba(0,0,0,0.95); }
-        .activa { display: flex !important; }
-
-        /* Fondo de Video */
-        .video-bg { position: absolute; z-index: -1; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: brightness(0.7); }
-
-        /* Textos */
-        .titulo-principal { font-size: 24px; letter-spacing: 3px; color: var(--naranja); margin: 5px 0; text-transform: uppercase; }
-        .subtitulo { font-size: 11px; opacity: 0.8; letter-spacing: 4px; margin: 10px 0; text-transform: uppercase; color: #ccc; }
-        .texto-pista { font-size: 15px; line-height: 1.6; max-width: 500px; margin: 20px 0; color: #eee; }
-
-        /* Botones */
-        .btn-mot { 
-            background: transparent; border: 2px solid var(--naranja); color: var(--naranja); 
-            padding: 12px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; 
-            text-transform: uppercase; width: auto; min-width: 220px; font-size: 14px; 
-            margin-top: 15px; transition: 0.3s; letter-spacing: 2px;
-        }
-        .btn-mot:active { background: var(--naranja); color: #000; transform: scale(0.95); }
-
-        /* Escáner */
-        #reader { width: 100%; max-width: 400px; border: 2px solid var(--naranja); border-radius: 10px; overflow: hidden; }
-
         /* Modal Alerta */
         #capa-alerta { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200000; display: none; align-items: center; justify-content: center; }
-        .modal-caja { background: #111; border: 2px solid var(--naranja); border-radius: 15px; padding: 30px; max-width: 90%; width: 350px; text-align: center; box-shadow: 0 0 30px rgba(255,102,0,0.2); }
+        .modal-caja { background: #111; border: 2px solid #ff6600; border-radius: 15px; padding: 30px; max-width: 90%; width: 350px; text-align: center; }
     </style>
 </head>
 <body>
 
+    <div id="loader-global">
+        <div class="spinner"></div>
+        <p style="color:#ff6600; font-size:10px; letter-spacing:2px;">CARGANDO / LOADING...</p>
+    </div>
+
+    <div id="camera-flash"></div>
+
+    <div id="aviso-vertical">
+        <div class="icon-rotate">📱</div>
+        <p style="font-size:12px; letter-spacing:1px; color:#fff;">GIRA EL CELULAR / ROTATE DEVICE</p>
+        <button class="btn-motmot" style="margin-top:20px; border-color:#fff; color:#fff;" onclick="forzarFullScreen()">FULL SCREEN</button>
+    </div>
+    
     <div id="capa-alerta">
         <div class="modal-caja">
-            <h3 id="alerta-titulo" style="color:var(--naranja); margin-top:0;">AVISO</h3>
-            <p id="alerta-texto" style="color:#ddd; margin: 20px 0;">Mensaje...</p>
-            <button class="btn-mot" onclick="cerrarAlerta()" style="margin-top:0; border-color:#555; color:#fff; font-size:12px;">ENTENDIDO</button>
+            <h3 id="alerta-titulo" style="color:#ff6600; margin-top:0;">AVISO</h3>
+            <p id="alerta-texto" style="color:#ddd; margin: 20px 0;">...</p>
+            <button class="btn-motmot" onclick="document.getElementById('capa-alerta').style.display='none'" style="margin-top:0; border-color:#555; color:#fff; font-size:12px;">OK</button>
         </div>
     </div>
 
-    <div id="capa-contenido" class="capa">
-        <video class="video-bg" autoplay loop muted playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
-        
-        <p class="subtitulo" style="color:var(--verde);">OBJETIVO ACTIVO</p>
-        <h1 class="titulo-principal">PISTA 1</h1>
-        
-        <div class="texto-pista">
-            <p>Bienvenido a Barichara, explorador.</p>
-            <p>Tu primera misión es encontrar el <strong>"Lugar de la Piedra"</strong>. Busca en el parque principal el monumento a los talladores.</p>
-            <p>Allí encontrarás un código QR oculto.</p>
+    <audio id="snd-flute" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/mixkit-melodical-flute-music-notification-2310.wav"></audio>
+    <audio id="snd-exito" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/mixkit-church-bell-calling-603.wav"></audio>
+
+    <div id="app-juego">
+        <div id="zona-juego">
+            
+            <div id="step-start" style="position:absolute; width:100%; height:100%; background:#000; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                <div style="font-size:40px; color:#ff6600; margin-bottom:15px;">▶</div>
+                <button id="btn-start" class="btn-motmot" onclick="iniciarMision()">INICIAR PISTA #1</button>
+            </div>
+
+            <div id="step-intro" style="display:none; width:100%; height:100%;">
+                <div style="position:absolute; width:100%; height:100%;">
+                    <video id="vid-1" class="video-paneo" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/Diseno-sin-titulo-3.mp4" playsinline loop muted></video>
+                    <div class="capa-oscura"></div>
+                </div>
+                <div style="position:absolute; z-index:10; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+                    <div id="intro-text" style="text-align:center; display:none;">
+                        <p id="txt-intro" class="texto-narrativo" style="text-shadow: 2px 2px 5px black;">
+                            </p>
+                        <button id="btn-ver-pista" class="btn-motmot" onclick="cambiarPaso('step-intro', 'step-mapa')">VER PISTA</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="step-mapa" style="display:none; width:100%; height:100%;">
+                <div class="col-media">
+                    <img src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/22222.png" class="img-contain">
+                </div>
+                <div class="col-text">
+                    <p id="txt-mapa" class="texto-narrativo">
+                        </p>
+                    <button id="btn-llegue" class="btn-motmot" onclick="cambiarPaso('step-mapa', 'step-pos')">YA LLEGUÉ</button>
+                </div>
+            </div>
+
+            <div id="step-pos" style="display:none; width:100%; height:100%;">
+                <div class="col-media">
+                    <video class="media-item" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/Diseno-sin-titulo-5.mp4" playsinline muted loop autoplay></video>
+                </div>
+                <div class="col-text">
+                    <p id="txt-pos" class="texto-narrativo">
+                         </p>
+                    <button id="btn-listo" class="btn-motmot" onclick="cambiarPaso('step-pos', 'step-historia'); playHistoria();">ESTOY LISTO</button>
+                </div>
+            </div>
+
+            <div id="step-historia" style="display:none; width:100%; height:100%;">
+                <div class="col-media">
+                    <video class="media-item" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/Diseno-sin-titulo-4.mp4" playsinline muted loop autoplay></video>
+                </div>
+                <div class="col-text">
+                    <p id="txt-historia-dinamico" class="texto-narrativo"></p>
+                    <button id="btn-continuar" class="btn-motmot" onclick="nextHistoria()">CONTINUAR</button>
+                </div>
+            </div>
+
+            <div id="step-final" style="display:none; width:100%; height:100%;">
+                <div class="col-media">
+                    <video class="media-item" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/Diseno-sin-titulo-6.mp4" playsinline muted loop autoplay></video>
+                </div>
+                <div class="col-text">
+                    <p id="txt-final" class="texto-narrativo">
+                         </p>
+                    <button id="btn-escanear" class="btn-motmot" onclick="abrirScanner()">ESCANEAR</button>
+                </div>
+            </div>
+
+            <div id="scan-overlay">
+                <p id="txt-enfoca" style="color:#ff6600; margin-bottom:20px; font-size:12px; letter-spacing:1px;">ENFOCA EL CÓDIGO QR</p>
+                <div id="reader-wrapper"><div id="reader"></div><div class="laser"></div></div>
+                <button id="btn-cancelar" class="btn-motmot" style="margin-top:20px; border-color:#555; color:#555;" onclick="cerrarScanner()">CANCELAR</button>
+            </div>
+
         </div>
-
-        <button class="btn-mot" onclick="abrirEscaner()">📸 YA LO ENCONTRÉ</button>
-        
-        <button onclick="window.location.href='index.html'" style="background:none; border:none; color:#777; margin-top:20px; text-decoration:underline; font-size:11px; cursor:pointer;">
-            ⬅ Volver al Tablero
-        </button>
-    </div>
-
-    <div id="capa-escaner" class="capa">
-        <h3 style="color:var(--naranja); letter-spacing:3px; margin-bottom:20px;">ESCANEAR QR</h3>
-        <div id="reader"></div>
-        <button class="btn-mot" onclick="cerrarEscaner()" style="border-color:#555; color:#aaa; margin-top:20px;">CANCELAR</button>
     </div>
 
     <script>
-        // CONFIGURACIÓN
+        // --- CONFIGURACIÓN ---
         const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec";
-        
-        // ¡IMPORTANTE! Este es el código que debe tener el QR físico de la Pista 1
         const CODIGO_META = "BARICHARA_PISTA_01"; 
 
-        let html5QrcodeScanner = null;
-
-        // --- LÓGICA DEL ESCÁNER ---
-        function abrirEscaner() {
-            document.getElementById('capa-contenido').style.display = 'none';
-            document.getElementById('capa-escaner').style.display = 'flex';
-            
-            html5QrcodeScanner = new Html5Qrcode("reader");
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            
-            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
-            .catch(err => {
-                mostrarAlerta("No se pudo iniciar la cámara. Revisa los permisos.", "ERROR CÁMARA");
-                cerrarEscaner();
-            });
-        }
-
-        function cerrarEscaner() {
-            if(html5QrcodeScanner) {
-                html5QrcodeScanner.stop().then(() => {
-                    html5QrcodeScanner.clear();
-                    document.getElementById('capa-escaner').style.display = 'none';
-                    document.getElementById('capa-contenido').style.display = 'flex';
-                }).catch(err => console.log(err));
+        // --- DICCIONARIO DE IDIOMAS ---
+        const TEXTOS = {
+            es: {
+                btn_start: "INICIAR PISTA #1",
+                intro: `"Tu destino es el ombligo de piedra de este pueblo."<br>Busca la <span class="destacado">FUENTE</span> antigua.`,
+                btn_ver: "VER PISTA",
+                mapa: `Pregunta por la <span class="destacado">FUENTE DEL PARQUE</span> y ve hacia allá.`,
+                btn_llegue: "YA LLEGUÉ",
+                pos: `Párate junto a la <span class="destacado">FUENTE</span> y mira hacía la iglesia.`,
+                btn_listo: "ESTOY LISTO",
+                btn_cont: "CONTINUAR",
+                final: `La historia dejó cicatrices, y no todas están dentro de la iglesia.<br><br><span class="destacado">HALLA EL CÓDIGO EN EL ÁREA VERDE, SIGUIENDO LA ORILLA DEL SENDERO HACIA EL TEMPLO</span>`,
+                btn_scan: "ESCANEAR",
+                txt_enfoca: "ENFOCA EL CÓDIGO QR",
+                btn_cancel: "CANCELAR",
+                alerta_ok: "¡PISTA ENCONTRADA!",
+                alerta_err: "CÓDIGO INCORRECTO",
+                historia: [
+                    "Todo comenzó en 1702, no muy lejos de aquí. Alguien encontró una imagen misteriosa grabada naturalmente en la roca de un arroyo.",
+                    "El objeto tenía tal poder que transformó la región. Se construyó una ermita y luego una iglesia solo para contenerla, fundando lo que hoy conoces como Barichara.",
+                    "Pero la historia oficial tiene una cicatriz. En 1838, llegó una orden suprema desde la capital. Declararon que la piedra original era un simple ídolo pagano.",
+                    "La iglesia que tienes frente a ti se levantó para proteger lo que quedó de esa fe. Adentro no yace la piedra original, sino una réplica que guarda el secreto."
+                ]
+            },
+            en: {
+                btn_start: "START CLUE #1",
+                intro: `"Your destiny is the stone navel of this town."<br>Look for the old <span class="destacado">FOUNTAIN</span>.`,
+                btn_ver: "SEE CLUE",
+                mapa: `Ask for the <span class="destacado">PARK FOUNTAIN</span> and go there.`,
+                btn_llegue: "I'M HERE",
+                pos: `Stand by the <span class="destacado">FOUNTAIN</span> and face the church.`,
+                btn_listo: "I'M READY",
+                btn_cont: "CONTINUE",
+                final: `History left scars, and not all are inside the church.<br><br><span class="destacado">FIND THE CODE IN THE GREEN AREA, FOLLOWING THE PATH TOWARDS THE TEMPLE</span>`,
+                btn_scan: "SCAN CODE",
+                txt_enfoca: "FOCUS THE QR CODE",
+                btn_cancel: "CANCEL",
+                alerta_ok: "CLUE FOUND!",
+                alerta_err: "WRONG CODE",
+                historia: [
+                    "It all started in 1702, not far from here. Someone found a mysterious image naturally engraved on a creek rock.",
+                    "The object had such power that it transformed the region. A chapel and then a church were built just to contain it, founding what you know today as Barichara.",
+                    "But official history has a scar. In 1838, a supreme order arrived from the capital. They declared the original stone was a simple pagan idol.",
+                    "The church in front of you was built to protect what remained of that faith. Inside lies not the original stone, but a replica keeping the secret."
+                ]
             }
+        };
+
+        // Variables Globales
+        let idioma = localStorage.getItem('motmot_lang') || 'es';
+        let html5QrCode = null;
+        let historiaIdx = 0;
+
+        // --- CARGA Y CONFIGURACIÓN ---
+        window.addEventListener('load', () => {
+            aplicarIdioma();
+            setTimeout(() => { document.getElementById('loader-global').style.display = 'none'; }, 1500);
+        });
+
+        function aplicarIdioma() {
+            const t = TEXTOS[idioma];
+            // Botones e instrucciones estáticas
+            document.getElementById('btn-start').innerText = t.btn_start;
+            document.getElementById('txt-intro').innerHTML = t.intro;
+            document.getElementById('btn-ver-pista').innerText = t.btn_ver;
+            document.getElementById('txt-mapa').innerHTML = t.mapa;
+            document.getElementById('btn-llegue').innerText = t.btn_llegue;
+            document.getElementById('txt-pos').innerHTML = t.pos;
+            document.getElementById('btn-listo').innerText = t.btn_listo;
+            document.getElementById('btn-continuar').innerText = t.btn_cont;
+            document.getElementById('txt-final').innerHTML = t.final;
+            document.getElementById('btn-escanear').innerText = t.btn_scan;
+            document.getElementById('txt-enfoca').innerText = t.txt_enfoca;
+            document.getElementById('btn-cancelar').innerText = t.btn_cancel;
         }
 
-        function onScanSuccess(decodedText) {
-            // Detener escáner
-            html5QrcodeScanner.stop().then(() => {
-                document.getElementById('capa-escaner').style.display = 'none';
-                document.getElementById('capa-contenido').style.display = 'flex';
-                
-                validarCodigo(decodedText);
-            });
+        function forzarFullScreen() {
+            let doc = document.documentElement;
+            if(doc.requestFullscreen) doc.requestFullscreen();
+            else if(doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
         }
 
-        // --- VALIDACIÓN Y GUARDADO ---
-        function validarCodigo(texto) {
-            console.log("Escaneado:", texto);
+        function cambiarPaso(actual, siguiente) {
+            document.getElementById(actual).style.display = 'none';
+            document.getElementById(siguiente).style.display = 'flex'; // IMPORTANTE: Flex para mantener diseño 50/50
+        }
 
-            if (texto === CODIGO_META) {
-                mostrarAlerta("¡Código Correcto! Sincronizando datos...", "¡EXCELENTE!");
-                
-                // 1. Actualizar memoria local para que el celular sepa que va en la 2
-                localStorage.setItem('motmot_pista', 2);
+        // --- FLUJO ---
+        function iniciarMision() {
+            forzarFullScreen();
+            document.getElementById('step-start').style.display = 'none';
+            document.getElementById('step-intro').style.display = 'block'; // Block porque es absoluto
+            document.getElementById('vid-1').play();
+            
+            // Sonido y texto tras 4 segs
+            setTimeout(() => { 
+                document.getElementById('intro-text').style.display = 'block'; 
+                document.getElementById('snd-flute').play(); 
+            }, 4000);
+        }
 
-                // 2. Guardar en la Nube (Google Sheets)
-                guardarEnNube();
+        // --- HISTORIA SECUENCIAL ---
+        function playHistoria() {
+            historiaIdx = 0;
+            document.getElementById('txt-historia-dinamico').innerText = TEXTOS[idioma].historia[0];
+        }
+
+        function nextHistoria() {
+            historiaIdx++;
+            if(historiaIdx < TEXTOS[idioma].historia.length) {
+                document.getElementById('txt-historia-dinamico').innerText = TEXTOS[idioma].historia[historiaIdx];
             } else {
-                mostrarAlerta("Ese no es el código correcto. Sigue buscando.", "ERROR");
+                cambiarPaso('step-historia', 'step-final');
             }
         }
 
-        function guardarEnNube() {
-            const usuario = localStorage.getItem('motmot_clave'); // Tu código de equipo (ej: TEAM01)
+        // --- ESCÁNER Y LÓGICA DE DATOS ---
+        function abrirScanner() {
+            document.getElementById('scan-overlay').style.display = 'flex';
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 },
+                (text) => {
+                    // Verificación si encuentra el código correcto
+                    if(text.includes(CODIGO_META)) {
+                        html5QrCode.stop().then(() => {
+                            exito();
+                        });
+                    } else {
+                        // Opcional: Avisar si es incorrecto (pero sin detener el escáner necesariamente)
+                        // console.log("Código incorrecto: " + text);
+                    }
+                }
+            ).catch(err => alert("Error cámara: " + err));
+        }
+
+        function cerrarScanner() {
+            if(html5QrCode) html5QrCode.stop();
+            document.getElementById('scan-overlay').style.display = 'none';
+        }
+
+        function exito() {
+            document.getElementById('snd-exito').play();
+            document.getElementById('camera-flash').style.display = 'block'; // Flash blanco
             
-            // Llamada al script de Google (Action: guardar_progreso)
-            const urlFinal = `${URL_GOOGLE}?action=guardar_progreso&codigo=${usuario}&pista=2`;
-            
-            ejecutarJSONP(urlFinal, (data) => {
-                // No importa mucho si responde success o error, lo importante es que el usuario avance
-                // Redirigir al index para que el cerebro cargue la Pista 2
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1500); 
-            });
+            // 1. Mostrar mensaje éxito
+            mostrarAlerta(TEXTOS[idioma].alerta_ok);
+
+            // 2. Guardar en LocalStorage
+            localStorage.setItem('motmot_pista', 2);
+
+            // 3. Guardar en Google Sheets
+            const usuario = localStorage.getItem('motmot_clave');
+            if(usuario) {
+                const urlFinal = `${URL_GOOGLE}?action=guardar_progreso&codigo=${usuario}&pista=2`;
+                ejecutarJSONP(urlFinal, (data) => {
+                    console.log("Progreso guardado");
+                    // 4. Redirigir al cerebro (index.html)
+                    setTimeout(() => { window.location.href = "index.html"; }, 2000);
+                });
+            } else {
+                // Si no hay usuario (pruebas), redirige igual
+                setTimeout(() => { window.location.href = "index.html"; }, 2000);
+            }
         }
 
         // --- UTILIDADES ---
@@ -171,12 +343,10 @@
             document.body.appendChild(script);
         }
 
-        function mostrarAlerta(msg, titulo) {
-            document.getElementById('alerta-titulo').innerText = titulo || "AVISO";
+        function mostrarAlerta(msg) {
             document.getElementById('alerta-texto').innerText = msg;
             document.getElementById('capa-alerta').style.display = 'flex';
         }
-        function cerrarAlerta() { document.getElementById('capa-alerta').style.display = 'none'; }
     </script>
 </body>
 </html>
