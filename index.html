@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
     
@@ -16,11 +17,20 @@
         :root { --naranja: #ff6600; --verde: #00cc66; --negro: #000; --gris: #0c0c0c; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        /* USAMOS 100dvh PARA EVITAR PROBLEMAS CON LAS BARRAS DEL NAVEGADOR */
         body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100dvh; width: 100vw; font-family: 'Verdana', sans-serif; overflow: hidden; }
         
+        /* BOTÓN FLOTANTE FULL SCREEN (Solo visible si no está en full screen) */
+        #btn-fullscreen {
+            position: fixed; top: 10px; right: 10px; z-index: 999999;
+            background: rgba(0,0,0,0.5); border: 1px solid var(--naranja);
+            color: var(--naranja); padding: 10px; border-radius: 50%;
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; cursor: pointer; transition: 0.3s;
+        }
+        #btn-fullscreen:active { background: var(--naranja); color: black; }
+
         /* CAPA DE ROTACIÓN */
-        #capa-rotar { position: fixed; inset: 0; background: #000; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
+        #capa-rotar { position: fixed; inset: 0; background: #000; z-index: 99990; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
         #icono-rotar { font-size: 60px; animation: girar 2s infinite; margin-bottom: 20px; }
         @keyframes girar { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
         @media (orientation: portrait) { #capa-rotar { display: flex; } }
@@ -39,7 +49,6 @@
         input:focus { border-bottom-color: var(--naranja); }
         .oculto { display: none !important; }
 
-        /* Estilos Ranking */
         #tabla-ranking { width: 100%; max-width: 400px; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
         #tabla-ranking th { color: var(--naranja); border-bottom: 1px solid #333; padding: 10px; text-transform: uppercase; }
         #tabla-ranking td { padding: 10px; border-bottom: 1px solid #111; }
@@ -62,10 +71,13 @@
 
     <div id="flash-effect"></div>
 
-    <div id="capa-rotar">
+    <div id="btn-fullscreen" onclick="toggleFullScreen()">⛶</div>
+
+    <div id="capa-rotar" onclick="activarPantallaCompleta()">
         <div id="icono-rotar">📱</div>
         <h3>POR FAVOR GIRA TU DISPOSITIVO</h3>
         <p style="opacity: 0.7;">Para vivir la experiencia cinematográfica, usa el celular en horizontal.</p>
+        <p style="font-size:10px; margin-top:20px; color:var(--naranja);">(TOCA LA PANTALLA AL GIRAR)</p>
     </div>
 
     <div id="capa-login" class="capa activa">
@@ -154,7 +166,7 @@
     <script>
         const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec"; 
         
-        // SONIDO BEEP (Base64 corto real para feedback)
+        // SONIDO BEEP SIMULADO
         const sndBeep = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU..."); 
 
         const TEXTOS = {
@@ -183,11 +195,11 @@
             2: { qr: "BARICHARA_PISTA_02", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-15.mp4", lat: 6.634477, lon: -73.224308, es: { titulo: "FUNDACIÓN", texto: "Donde se aprende a construir con tierra. Escuela Taller." }, en: { titulo: "FOUNDATION", texto: "Where building with earth is taught. Workshop School." } },
             3: { qr: "BARICHARA_PISTA_03", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", lat: 6.634307, lon: -73.225441, es: { titulo: "TABACO & PAPEL", texto: "Hojas que cuentan historias. Taller de Papel." }, en: { titulo: "TOBACCO & PAPER", texto: "Leaves that tell stories. Paper Workshop." } },
             4: { qr: "BARICHARA_PISTA_04", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 4", texto: "Sigue las instrucciones." }, en: { titulo: "CLUE 4", texto: "Follow instructions." } },
-            5: { qr: "BARICHARA_PISTA_05", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 5", texto: "Continúa explorando." }, en: { titulo: "CLUE 5", texto: "Keep exploring." } },
-            6: { qr: "BARICHARA_PISTA_06", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 6", texto: "Ya casi llegas." }, en: { titulo: "CLUE 6", texto: "Almost there." } },
-            7: { qr: "BARICHARA_PISTA_07", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 7", texto: "Observa los detalles." }, en: { titulo: "CLUE 7", texto: "Watch the details." } },
-            8: { qr: "BARICHARA_PISTA_08", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 8", texto: "Un paso más." }, en: { titulo: "CLUE 8", texto: "One more step." } },
-            9: { qr: "BARICHARA_PISTA_09", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 9", texto: "Prepárate para el final." }, en: { titulo: "CLUE 9", texto: "Prepare for the end." } },
+            5: { qr: "BARICHARA_PISTA_05", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 5", texto: "Continúa explorando." }, en: { titulo: "Keep exploring." } },
+            6: { qr: "BARICHARA_PISTA_06", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 6", texto: "Ya casi llegas." }, en: { titulo: "Almost there." } },
+            7: { qr: "BARICHARA_PISTA_07", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 7", texto: "Observa los detalles." }, en: { titulo: "Watch the details." } },
+            8: { qr: "BARICHARA_PISTA_08", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 8", texto: "Un paso más." }, en: { titulo: "One more step." } },
+            9: { qr: "BARICHARA_PISTA_09", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-13.mp4", es: { titulo: "PISTA 9", texto: "Prepárate para el final." }, en: { titulo: "Prepare for the end." } },
             10: { qr: "TESORO_MOTMOT_FINAL", video: "https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-11.mp4", es: { titulo: "EL TESORO", texto: "¡Has llegado! Escanea el cofre final." }, en: { titulo: "THE TREASURE", texto: "You made it! Scan the final chest." } }
         };
 
@@ -203,17 +215,30 @@
             if(localStorage.getItem('motmot_clave')) iniciarMision(true);
         };
 
+        // --- GESTIÓN DE PANTALLA COMPLETA ---
         function activarPantallaCompleta() {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) { elem.requestFullscreen().catch(err => console.log(err)); }
-            else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); } 
+            let elem = document.documentElement;
+            if (elem.requestFullscreen) elem.requestFullscreen().catch(e=>console.log(e));
+            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+            else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+        }
+
+        function desactivarPantallaCompleta() {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                activarPantallaCompleta();
+            } else {
+                desactivarPantallaCompleta();
+            }
         }
 
         function iniciarMision(esRecarga = false) {
-            // FORZAR FULL SCREEN AL HACER CLICK EN EL BOTÓN
-            if(!esRecarga) {
-                activarPantallaCompleta();
-            }
+            // INTENTO DE ACTIVACIÓN AL TOCAR EL BOTÓN
+            activarPantallaCompleta();
 
             let nom = document.getElementById('reg-nombre').value.trim();
             const cla = esRecarga ? localStorage.getItem('motmot_clave') : document.getElementById('reg-clave').value.toUpperCase().trim();
@@ -230,7 +255,7 @@
                     nivelActual = parseInt(data.pista_actual || 1);
                     localStorage.setItem('motmot_pista', nivelActual);
                     if(!esRecarga && data.modo === "reingreso") {
-                        alert(`¡Bienvenido de nuevo Agente ${data.nombre_jugador}! Continuamos donde lo dejaste.`);
+                        alert(`¡Bienvenido de nuevo Agente ${data.nombre_jugador}!`);
                     }
                     irATablero();
                 } else if(!esRecarga) {
@@ -263,7 +288,7 @@
             const data = PISTAS_DATA[n];
             const info = data[idioma];
             
-            // RESET VIDEO PARA EVITAR BLOQUEOS
+            // RESET VIDEO FORZADO
             const vid = document.getElementById('pista-video');
             vid.pause();
             vid.src = "";
@@ -272,10 +297,12 @@
             document.getElementById('pista-titulo').innerText = info.titulo;
             document.getElementById('pista-texto').innerText = info.texto;
             
-            // Cargar nuevo video
-            vid.src = data.video;
-            vid.style.display = "block";
-            vid.play().catch(e => console.log("Autoplay prevent"));
+            // CARGA LIMPIA
+            setTimeout(() => {
+                vid.src = data.video;
+                vid.style.display = "block";
+                vid.play().catch(e => console.log("Autoplay bloqueado por navegador"));
+            }, 100);
 
             document.getElementById('pista-mapa').style.display = "none";
             document.getElementById('pista-gps-ui').style.display = "none"; 
@@ -305,18 +332,16 @@
                 let idx = ORDEN.indexOf(nivelActual);
                 nivelActual = ORDEN[idx + 1];
                 localStorage.setItem('motmot_pista', nivelActual);
-                // AVANCE OPTIMISTA
                 irATablero(); 
-                ejecutarJSONP(`${URL_GOOGLE}?action=guardar_progreso&codigo=${localStorage.getItem('motmot_clave')}&pista=${nivelActual}`, (res) => { console.log('Progreso guardado'); });
+                ejecutarJSONP(`${URL_GOOGLE}?action=guardar_progreso&codigo=${localStorage.getItem('motmot_clave')}&pista=${nivelActual}`, (res) => { console.log('Guardado OK'); });
             }
         }
 
-        // --- RESTO DE FUNCIONES DE RANKING Y GPS (IGUAL QUE ANTES) ---
         function verRanking(filtro) {
             ultimaCapa = document.querySelector('.capa.activa').id;
             mostrarCapa('capa-ranking');
             const lista = document.getElementById('lista-ranking');
-            lista.innerHTML = "<tr><td colspan='3'>Cargando datos...</td></tr>";
+            lista.innerHTML = "<tr><td colspan='3'>Cargando...</td></tr>";
             let url = `${URL_GOOGLE}?action=obtener_ranking`;
             let titulo = "RANKING GLOBAL";
             if (filtro === 'grupo') {
