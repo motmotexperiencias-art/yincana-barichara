@@ -4,129 +4,405 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    
     <title>Búsqueda del Tesoro | Barichara</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
-        /* ESTILOS IGUALES A TU DISEÑO ORIGINAL */
-        :root { --naranja: #ff6600; --verde: #00cc66; --negro: #000; }
-        body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100vh; font-family: 'Verdana', sans-serif; overflow: hidden; }
-        .capa { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: #000; z-index: 10; text-align: center; }
+        /* --- ESTILOS VISUALES (TU DISEÑO ORIGINAL) --- */
+        :root { --naranja: #ff6600; --verde: #00cc66; --negro: #000; --gris: #111; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body, html { margin: 0; padding: 0; background: var(--negro); color: white; height: 100dvh; width: 100vw; font-family: 'Verdana', sans-serif; overflow: hidden; }
+
+        .capa { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; 
+            display: none; flex-direction: column; align-items: center; justify-content: center; 
+            padding: 20px; 
+            padding-left: max(20px, env(safe-area-inset-left)); 
+            padding-right: max(20px, env(safe-area-inset-right));
+            text-align: center; z-index: 10; background: var(--negro); 
+            overflow-y: auto; 
+        }
         .activa { display: flex !important; }
+        
+        .contenido-central {
+            width: 100%; max-width: 500px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .video-bg { position: absolute; z-index: -1; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: brightness(0.7); }
+
+        .titulo-principal { font-size: 24px; letter-spacing: 3px; color: var(--naranja); margin: 5px 0; text-transform: uppercase; }
+        .subtitulo { font-size: 11px; opacity: 0.8; letter-spacing: 4px; margin: 5px 0; text-transform: uppercase; }
         
         .btn-mot { 
             background: transparent; border: 2px solid var(--naranja); color: var(--naranja); 
-            padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; 
-            text-transform: uppercase; margin-top: 20px; letter-spacing: 2px;
+            padding: 12px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; 
+            text-transform: uppercase; width: auto; min-width: 220px; font-size: 14px; 
+            margin-top: 20px; transition: 0.3s; letter-spacing: 2px;
         }
-        .btn-mot:active { background: var(--naranja); color: #000; }
-        
-        input { background: transparent; border: none; border-bottom: 2px solid #666; color: white; padding: 10px; margin: 10px; text-align: center; font-size: 18px; outline: none; }
-        
-        /* Ajustes para el video de fondo */
-        .video-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4; z-index: -1; }
+        .btn-mot:active { background: var(--naranja); color: #000; transform: scale(0.95); }
+
+        input { 
+            background: transparent; border: none; border-bottom: 2px solid #666; 
+            color: white; padding: 12px; margin: 10px 0; 
+            width: 100%; max-width: 300px; 
+            text-align: center; font-size: 18px; outline: none; transition: 0.3s; border-radius: 0; 
+        }
+        input:focus { border-bottom-color: var(--naranja); transform: scale(1.05); }
+
+        #paso-idioma { display: flex; gap: 40px; justify-content: center; margin-top: 20px; }
+        .lang-option { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; }
+        .lang-option:active { transform: scale(1.1); }
+        .flag-btn { font-size: 55px; background: none; border: none; cursor: pointer; padding: 0; margin: 0; }
+        .lang-label { margin-top: 10px; font-size: 11px; letter-spacing: 2px; color: #fff; font-weight: bold; opacity: 0.8; }
+
+        #reader { width: 100%; max-width: 500px; border-radius: 10px; overflow: hidden; margin-bottom: 20px; border: 2px solid var(--naranja); }
+        .indicador-pista { font-size: 18px; color: var(--verde); margin-bottom: 30px; letter-spacing: 2px; font-weight: bold; }
+
+        @media (max-height: 500px) {
+            .capa { padding-top: 10px; padding-bottom: 10px; justify-content: center; }
+            .titulo-principal { font-size: 18px; margin: 2px 0; }
+            .subtitulo { font-size: 9px; margin: 2px 0; }
+            .btn-mot { padding: 8px 20px; font-size: 12px; margin-top: 10px; min-width: 180px; }
+            input { padding: 6px; margin: 5px 0; font-size: 14px; }
+            .flag-btn { font-size: 40px; }
+            #paso-idioma { margin-top: 10px; gap: 30px; }
+            #btn-audio-login { width: 35px; height: 35px; font-size: 16px; top: 10px; right: 10px; }
+            #reader { height: 200px; width: 200px; margin: 0 auto; } 
+        }
+
+        #capa-rotar { position: fixed; inset: 0; background: #000; z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
+        #icono-rotar { font-size: 60px; animation: girar 2s infinite; margin-bottom: 20px; }
+        @keyframes girar { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+        @media (orientation: portrait) { #capa-rotar { display: flex !important; } }
+
+        #capa-fullscreen-request { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 99990; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; backdrop-filter: blur(10px); padding: 40px; }
+        #btn-toggle-fs { position: fixed; top: 20px; left: 20px; z-index: 999999; background: rgba(0,0,0,0.3); border: 1px solid #555; color: #888; padding: 8px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        #btn-audio-login { position: absolute; top: 20px; right: 20px; font-size: 20px; cursor: pointer; opacity: 0.8; z-index: 20; background: rgba(0,0,0,0.6); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border: 1px solid #555; transition: 0.3s; }
+        #btn-audio-login:active { transform: scale(0.9); background: var(--naranja); }
+
+        #capa-alerta { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200000; display: none; align-items: center; justify-content: center; }
+        .modal-caja { background: #111; border: 2px solid var(--naranja); border-radius: 15px; padding: 30px; max-width: 90%; width: 350px; text-align: center; box-shadow: 0 0 40px rgba(255, 102, 0, 0.3); }
+        .modal-titulo { color: var(--naranja); font-size: 20px; font-weight: bold; margin-bottom: 20px; letter-spacing: 2px;}
+        .modal-texto { color: #ddd; font-size: 15px; margin-bottom: 20px; line-height: 1.6; }
+        .oculto { display: none !important; }
     </style>
 </head>
 <body>
 
+    <div id="capa-alerta">
+        <div class="modal-caja">
+            <div id="alerta-titulo" class="modal-titulo">AVISO</div>
+            <div id="alerta-texto" class="modal-texto">Mensaje...</div>
+            <button class="btn-mot" onclick="cerrarAlerta()" style="padding: 10px 20px; margin-top: 0; font-size: 12px; border-color: #555; color: #fff;">ENTENDIDO</button>
+        </div>
+    </div>
+
+    <div id="btn-toggle-fs" onclick="toggleFullScreen()">⛶ PANTALLA</div>
+
+    <div id="capa-rotar">
+        <div id="icono-rotar">📱</div>
+        <h3>GIRA TU DISPOSITIVO</h3>
+        <p style="opacity: 0.7; font-size: 14px; margin-top: 15px; margin-bottom: 25px; max-width: 80%;">Pon el celular en horizontal para comenzar la aventura.</p>
+        <button class="btn-mot" onclick="activarModoInmersivo()">INICIAR AVENTURA</button>
+    </div>
+
+    <div id="capa-fullscreen-request" style="display:none;">
+        <h2 style="color:var(--naranja); letter-spacing: 5px; margin-bottom: 20px;">PAUSA</h2>
+        <p style="margin-bottom: 30px; font-size: 14px; opacity: 0.8; max-width: 80%;">Has salido de la pantalla completa. Toca abajo para volver.</p>
+        <button class="btn-mot" onclick="activarModoInmersivo()">CONTINUAR JUEGO</button>
+    </div>
+
     <div id="capa-login" class="capa activa">
-        <video class="video-bg" autoplay loop muted playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
-        <h2 style="color:var(--naranja); letter-spacing:3px;">BARICHARA</h2>
-        <p style="font-size:10px; letter-spacing:2px; margin-bottom:20px;">ACCESO AL SISTEMA</p>
-        
-        <input type="text" id="reg-nombre" placeholder="Nombre Agente">
-        <input type="text" id="reg-clave" placeholder="Clave Misión">
-        <button class="btn-mot" onclick="login()">INICIAR</button>
-        <p id="msg-login" style="margin-top:15px; font-size:11px; color:#aaa;"></p>
+        <video id="vid-login" class="video-bg" autoplay loop playsinline src="https://www.motmotexperiencias.com/wp-content/uploads/2026/01/Diseno-sin-titulo-14.mp4"></video>
+        <div id="btn-audio-login" onclick="toggleAudioLogin()">🔊</div>
+
+        <div class="contenido-central">
+            <div style="margin-bottom: 15px;">
+                <p id="txt-subtitulo-top" class="subtitulo">BARICHARA</p>
+                <h2 id="txt-titulo-main" class="titulo-principal">BÚSQUEDA DEL TESORO</h2>
+                <p id="txt-subtitulo-bot" class="subtitulo">TU AVENTURA COMIENZA</p>
+            </div>
+            
+            <div id="paso-idioma">
+                <div class="lang-option" onclick="setLanguage('es')">
+                    <button class="flag-btn">🇨🇴</button>
+                    <span class="lang-label">ESPAÑOL</span>
+                </div>
+                <div class="lang-option" onclick="setLanguage('en')">
+                    <button class="flag-btn">🇬🇧</button>
+                    <span class="lang-label">ENGLISH</span>
+                </div>
+            </div>
+
+            <div id="paso-form" style="display:none; width:100%; flex-direction:column; align-items:center;">
+                <input type="text" id="reg-nombre" placeholder="Nombre de Explorador" autocomplete="off">
+                <input type="text" id="reg-clave" placeholder="Código de Acceso" autocomplete="off">
+                
+                <button id="btn-entrar" class="btn-mot" style="border-color:var(--verde); color:var(--verde);" onclick="iniciarMision()"></button>
+                
+                <p id="toggle-modo" onclick="alternarModoLogin()" style="margin-top:20px; font-size:12px; text-decoration:underline; cursor:pointer; color:#bbb;">
+                    ¿Ya tienes una misión? Reingresar
+                </p>
+
+                <button onclick="resetIdioma()" style="background:rgba(255,255,255,0.1); border:1px solid #555; border-radius: 30px; padding: 6px 15px; color:#aaa; margin-top:20px; font-size: 9px; text-transform: uppercase; cursor: pointer; transition:0.3s;">
+                    ⬅ Cambiar Idioma / Change Language
+                </button>
+            </div>
+        </div>
+        <p id="aviso-login" style="margin-top:15px; font-size:12px; color:var(--naranja); font-weight:bold;"></p>
     </div>
 
     <div id="capa-tablero" class="capa">
-        <p style="color:var(--verde); letter-spacing:2px;">ESTADO DE MISIÓN</p>
-        <h1 id="txt-nivel" style="font-size:40px; margin:10px 0;">CARGANDO...</h1>
-        <p id="txt-desc" style="max-width:80%; color:#ccc; font-size:12px;">Esperando instrucciones del satélite...</p>
-        <button id="btn-accion" class="btn-mot" onclick="">...</button>
+        <div class="contenido-central">
+            <p class="subtitulo" style="color:var(--verde);">ESTADO DE MISIÓN</p>
+            <h2 id="txt-pista-actual" class="indicador-pista" style="font-size: 30px; margin: 20px 0;">PISTA 1</h2>
+            
+            <p id="txt-desc-tablero" style="font-size: 13px; opacity: 0.8; margin-bottom: 30px; max-width: 80%;">
+                Busca el código QR oculto en la ubicación indicada.
+            </p>
+
+            <button id="btn-accion" class="btn-mot" onclick="ejecutarAccionNivel()">CARGANDO...</button>
+        </div>
     </div>
 
-<script>
-    // --- CONFIGURACIÓN ---
-    // PEGA AQUÍ LA URL QUE TE DIÓ GOOGLE APPS SCRIPT AL PUBLICAR:
-    const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec"; 
+    <div id="capa-escaner" class="capa" style="background: rgba(0,0,0,0.95);">
+        <h3 style="color:var(--naranja); letter-spacing: 2px; margin-bottom: 20px;">ESCANEAR QR</h3>
+        <div id="reader"></div>
+        <button class="btn-mot" onclick="cerrarEscaner()" style="border-color:#555; color:#aaa; margin-top: 20px;">CANCELAR</button>
+    </div>
 
-    // AQUÍ CONECTAMOS LOS ARCHIVOS (El Enrutador)
-    const RUTAS_ARCHIVOS = {
-        1: "pista1.html",
-        2: "pista2.html",
-        3: "pista3.html",
-        4: "pista4.html",
-        5: "pista5.html"
-    };
-
-    // --- LÓGICA DE LOGIN ---
-    function login() {
-        const nombre = document.getElementById('reg-nombre').value;
-        const clave = document.getElementById('reg-clave').value.toUpperCase();
-        if(!nombre || !clave) return alert("Faltan datos");
-
-        document.getElementById('msg-login').innerText = "CONECTANDO...";
+    <script>
+        // ================================================================
+        // === AQUÍ ESTÁ LA URL EXACTA QUE ME PEDISTE PONER ===
+        // ================================================================
+        const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec"; 
         
-        // Guardamos localmente para no preguntar siempre
-        localStorage.setItem('motmot_agente', nombre);
-        localStorage.setItem('motmot_clave', clave);
+        // MAPA DE PISTAS -> ARCHIVOS
+        const RUTAS_ARCHIVOS = {
+            1: "pista1.html",
+            2: "pista2.html",
+            3: "pista3.html"
+            // Agrega más según crees los archivos HTML
+        };
 
-        // Llamada a Google Sheets
-        fetch(`${URL_GOOGLE}?action=registrar_inicio&codigo=${clave}&nombre=${encodeURIComponent(nombre)}`)
-        .then(r => r.text()) // Leemos como texto porque JSONP a veces es tricky, pero fetch directo funciona si el GAS retorna JSON
-        .then(txt => {
-            // Nota: Tu GAS devuelve JSONP (callback(...)). Vamos a limpiar eso para leer el JSON.
-            const jsonLimpio = txt.replace(/^.*?\(|\)$/g, ''); 
-            const data = JSON.parse(jsonLimpio);
-
-            if(data.status === "success") {
-                localStorage.setItem('motmot_pista', data.pista_actual || 1);
-                mostrarTablero();
-            } else {
-                document.getElementById('msg-login').innerText = "ERROR: " + (data.code || "Clave inválida");
+        const TEXTOS = {
+            es: {
+                titulo_main: "BÚSQUEDA DEL TESORO", sub_top: "BARICHARA", sub_bot: "TU AVENTURA COMIENZA",
+                ph_nombre: "Nombre de Explorador", ph_clave: "Clave de Misión", 
+                btn_entrar: "¡A JUGAR!", btn_recuperar: "CONTINUAR JUEGO", 
+                toggle_reingreso: "¿Ya tienes partida? Reingresar", toggle_nuevo: "¿Nuevo Explorador? Regístrate", 
+                err_code: "CÓDIGO INVÁLIDO O AGOTADO", err_need_name: "NOMBRE DE EXPLORADOR REQUERIDO",
+                msg_recuperando: "VERIFICANDO CREDENCIALES...",
+                lbl_estado: "ESTADO DE MISIÓN", lbl_pista: "OBJETIVO ACTUAL:", lbl_tesoro: "BUSCANDO EL TESORO",
+                desc_tablero: "Accede al módulo visual para ver tu misión.",
+                btn_ir: "ABRIR PISTA", btn_scan: "ESCANEAR CÓDIGO",
+                alerta_incorrecto: "CÓDIGO INCORRECTO."
+            },
+            en: {
+                titulo_main: "TREASURE HUNT", sub_top: "BARICHARA", sub_bot: "YOUR ADVENTURE BEGINS",
+                ph_nombre: "Explorer Name", ph_clave: "Mission Key", 
+                btn_entrar: "LET'S PLAY!", btn_recuperar: "RESUME GAME", 
+                toggle_reingreso: "Game in progress? Resume here", toggle_nuevo: "New Explorer? Register here",
+                err_code: "INVALID OR EXPIRED CODE", err_need_name: "EXPLORER NAME REQUIRED",
+                msg_recuperando: "VERIFYING CREDENTIALS...",
+                lbl_estado: "MISSION STATUS", lbl_pista: "CURRENT OBJECTIVE:", lbl_tesoro: "SEARCHING TREASURE",
+                desc_tablero: "Access visual module to see mission.",
+                btn_ir: "OPEN CLUE", btn_scan: "SCAN CODE",
+                alerta_incorrecto: "WRONG CODE."
             }
-        })
-        .catch(e => {
-            // Fallback si falla Google: Dejar pasar si hay datos locales
-            console.log("Offline mode o error: " + e);
-            mostrarTablero();
-        });
-    }
+        };
 
-    // --- LÓGICA DEL TABLERO ---
-    function mostrarTablero() {
-        document.getElementById('capa-login').classList.remove('activa');
-        document.getElementById('capa-tablero').classList.add('activa');
+        let idioma = 'es';
+        let modoReingreso = false;
+        let html5QrcodeScanner = null;
 
-        const nivel = parseInt(localStorage.getItem('motmot_pista') || 1);
-        document.getElementById('txt-nivel').innerText = "PISTA " + nivel;
+        window.onload = () => {
+            verificarEstadoPantalla();
+            intentarAudioAutomatico(); 
+            if(localStorage.getItem('motmot_lang')) idioma = localStorage.getItem('motmot_lang');
+            
+            // Auto-login si ya hay sesión guardada
+            if(localStorage.getItem('motmot_clave')) {
+                 irATablero(); 
+            }
+            
+            document.addEventListener("fullscreenchange", verificarEstadoPantalla);
+            document.addEventListener("webkitfullscreenchange", verificarEstadoPantalla);
+            window.addEventListener("resize", verificarEstadoPantalla);
+        };
 
-        const btn = document.getElementById('btn-accion');
-        const desc = document.getElementById('txt-desc');
-
-        // VERIFICAMOS SI HAY ARCHIVO HTML PARA ESTE NIVEL
-        if (RUTAS_ARCHIVOS[nivel]) {
-            desc.innerText = "Esta pista requiere inmersión visual. Accede al módulo.";
-            btn.innerText = "ABRIR PISTA " + nivel;
-            btn.onclick = () => {
-                window.location.href = RUTAS_ARCHIVOS[nivel];
-            };
-        } else {
-            // Si es nivel 6 o más (o el tesoro), usamos lógica genérica (o escáner aquí)
-            desc.innerText = "Busca el código físico en la zona.";
-            btn.innerText = "ESCANEAR CÓDIGO";
-            btn.onclick = () => alert("Aquí abriría el escáner genérico (Pendiente config)");
+        // --- FUNCIONES VISUALES ---
+        function intentarAudioAutomatico() {
+            const vid = document.getElementById('vid-login');
+            const btn = document.getElementById('btn-audio-login');
+            vid.muted = false;
+            let promise = vid.play();
+            if (promise !== undefined) {
+                promise.then(_ => { btn.innerText = "🔊"; }).catch(error => {
+                    vid.muted = true; vid.play(); btn.innerText = "🔇";
+                });
+            }
         }
-    }
+        function toggleAudioLogin() {
+            const vid = document.getElementById('vid-login');
+            const btn = document.getElementById('btn-audio-login');
+            if (vid.muted) { vid.muted = false; btn.innerText = "🔊"; } else { vid.muted = true; btn.innerText = "🔇"; }
+        }
+        function activarModoInmersivo() {
+            let elem = document.documentElement;
+            const vid = document.getElementById('vid-login');
+            if(vid.muted) { vid.muted = false; document.getElementById('btn-audio-login').innerText = "🔊"; }
+            let p;
+            if (elem.requestFullscreen) p = elem.requestFullscreen();
+            else if (elem.webkitRequestFullscreen) p = elem.webkitRequestFullscreen();
+            if(p) { p.then(() => { document.getElementById('capa-fullscreen-request').style.display = 'none'; }).catch(err => {}); } 
+            else { document.getElementById('capa-fullscreen-request').style.display = 'none'; }
+        }
+        function toggleFullScreen() { if (!document.fullscreenElement && !document.webkitFullscreenElement) activarModoInmersivo(); else if (document.exitFullscreen) document.exitFullscreen(); }
+        function verificarEstadoPantalla() {
+            const isFullScreen = document.fullscreenElement || document.webkitFullscreenElement;
+            const isPortrait = window.innerHeight > window.innerWidth;
+            const capaPausa = document.getElementById('capa-fullscreen-request');
+            if (!isPortrait && !isFullScreen) { capaPausa.style.display = 'flex'; } else { capaPausa.style.display = 'none'; }
+        }
+        function mostrarAlerta(texto, titulo="AVISO") {
+            document.getElementById('alerta-titulo').innerText = titulo;
+            document.getElementById('alerta-texto').innerText = texto;
+            document.getElementById('capa-alerta').style.display = 'flex';
+        }
+        function cerrarAlerta() { document.getElementById('capa-alerta').style.display = 'none'; }
 
-    // Auto-login si ya entró antes
-    window.onload = () => {
-        if(localStorage.getItem('motmot_clave')) login();
-    };
-</script>
+        // --- IDIOMA ---
+        function setLanguage(lang, anim=true) {
+            idioma = lang; localStorage.setItem('motmot_lang', lang);
+            const t = TEXTOS[lang];
+            
+            document.getElementById('txt-titulo-main').innerText = t.titulo_main;
+            document.getElementById('txt-subtitulo-top').innerText = t.sub_top;
+            document.getElementById('txt-subtitulo-bot').innerText = t.sub_bot;
+            document.getElementById('reg-nombre').placeholder = t.ph_nombre;
+            document.getElementById('reg-clave').placeholder = t.ph_clave;
+            document.getElementById('btn-entrar').innerText = modoReingreso ? t.btn_recuperar : t.btn_entrar;
+            document.getElementById('toggle-modo').innerText = modoReingreso ? t.toggle_nuevo : t.toggle_reingreso;
+            
+            if(anim) {
+                document.getElementById('paso-idioma').style.display = 'none';
+                document.getElementById('paso-form').style.display = 'flex';
+            }
+        }
+        function resetIdioma() { document.getElementById('paso-form').style.display = 'none'; document.getElementById('paso-idioma').style.display = 'flex'; }
+        function alternarModoLogin() {
+            modoReingreso = !modoReingreso; const t = TEXTOS[idioma];
+            document.getElementById('reg-nombre').className = modoReingreso ? 'oculto' : '';
+            document.getElementById('btn-entrar').innerText = modoReingreso ? t.btn_recuperar : t.btn_entrar;
+            document.getElementById('toggle-modo').innerText = modoReingreso ? t.toggle_nuevo : t.toggle_reingreso;
+        }
+
+        // --- LÓGICA DE LOGIN (CONECTADA A TU URL) ---
+        function iniciarMision(esRecarga = false) {
+            activarModoInmersivo();
+            let nom = document.getElementById('reg-nombre').value.trim();
+            const cla = esRecarga ? localStorage.getItem('motmot_clave') : document.getElementById('reg-clave').value.toUpperCase().trim();
+            if (esRecarga) nom = localStorage.getItem('motmot_agente');
+            
+            if (!esRecarga && !modoReingreso && !nom) { mostrarAlerta(TEXTOS[idioma].err_need_name); return; }
+            if(!cla) return;
+            
+            if(esRecarga || modoReingreso) document.getElementById('aviso-login').innerText = TEXTOS[idioma].msg_recuperando;
+
+            // LLAMADA A TU SCRIPT
+            ejecutarJSONP(`${URL_GOOGLE}?action=registrar_inicio&codigo=${cla}&nombre=${encodeURIComponent(nom)}`, (data) => {
+                if(data.status === "success") {
+                    localStorage.setItem('motmot_clave', cla);
+                    localStorage.setItem('motmot_agente', data.nombre_jugador);
+                    localStorage.setItem('motmot_equipo', data.nombre_equipo);
+                    localStorage.setItem('motmot_pista', data.pista_actual || 1);
+                    
+                    if(!esRecarga && data.modo === "reingreso") {
+                        mostrarAlerta(`${data.nombre_jugador}`, "WELCOME BACK");
+                    }
+                    irATablero(); 
+                } else if(!esRecarga) {
+                    if (data.code === "ERR_NEED_NAME") mostrarAlerta(TEXTOS[idioma].err_need_name);
+                    else if (data.code === "ERR_USED") mostrarAlerta(TEXTOS[idioma].err_code, "ERROR");
+                    else document.getElementById('aviso-login').innerText = TEXTOS[idioma].err_code;
+                }
+            });
+        }
+
+        // --- LÓGICA DEL TABLERO ---
+        function irATablero() {
+            document.getElementById('capa-login').classList.remove('activa');
+            document.getElementById('capa-tablero').classList.add('activa');
+            
+            const pista = parseInt(localStorage.getItem('motmot_pista') || 1);
+            const t = TEXTOS[idioma];
+            
+            document.getElementById('txt-pista-actual').innerText = `${t.lbl_pista} ${pista}`;
+            document.getElementById('txt-desc-tablero').innerText = t.desc_tablero;
+            
+            const btn = document.getElementById('btn-accion');
+            
+            // SI EXISTE ARCHIVO HTML PARA ESTA PISTA (definido arriba)
+            if(RUTAS_ARCHIVOS[pista]) {
+                btn.innerText = t.btn_ir + " " + pista; // "ABRIR PISTA 1"
+            } else {
+                // FALLBACK: Si no hay archivo (ej: Pista 10), usa escáner
+                btn.innerText = t.btn_scan;
+            }
+        }
+
+        function ejecutarAccionNivel() {
+            const pista = parseInt(localStorage.getItem('motmot_pista') || 1);
+            
+            if(RUTAS_ARCHIVOS[pista]) {
+                // REDIRECCIONA A PISTA1.HTML, PISTA2.HTML, ETC.
+                window.location.href = RUTAS_ARCHIVOS[pista];
+            } else {
+                // SI NO HAY ARCHIVO, ABRE ESCÁNER
+                abrirEscaner();
+            }
+        }
+
+        // --- JSONP (EL TRUCO PARA QUE CONECTE) ---
+        function ejecutarJSONP(url, callback) {
+            const cbName = 'jsonp_' + Math.round(100000 * Math.random());
+            window[cbName] = (data) => { delete window[cbName]; document.body.removeChild(script); callback(data); };
+            const script = document.createElement('script');
+            script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cbName;
+            document.body.appendChild(script);
+        }
+
+        // --- ESCÁNER DE RESPALDO ---
+        function abrirEscaner() {
+            document.getElementById('capa-tablero').classList.remove('activa');
+            document.getElementById('capa-escaner').classList.add('activa');
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, 
+            onScanSuccess).catch(err => { mostrarAlerta("Error Cámara"); cerrarEscaner(); });
+        }
+        function cerrarEscaner() {
+            if(html5QrcodeScanner) html5QrcodeScanner.stop().then(() => {
+                document.getElementById('capa-escaner').classList.remove('activa');
+                document.getElementById('capa-tablero').classList.add('activa');
+            });
+        }
+        function onScanSuccess(decodedText) {
+            html5QrcodeScanner.stop().then(() => {
+                document.getElementById('capa-escaner').classList.remove('activa');
+                alert("Escaneado: " + decodedText); 
+                irATablero();
+            });
+        }
+    </script>
 </body>
 </html>
