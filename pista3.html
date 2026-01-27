@@ -16,6 +16,27 @@
         body, html { margin: 0; padding: 0; background: #000; color: white; height: 100vh; width: 100vw; font-family: 'Courier New', monospace; overflow: hidden; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+        /* --- PANTALLA DE BLOQUEO DE ORIENTACIÓN (NUEVO) --- */
+        #aviso-orientacion {
+            position: fixed; inset: 0; background: #000; z-index: 20000;
+            display: none; /* Se activa con CSS Media Query */
+            flex-direction: column; align-items: center; justify-content: center;
+            text-align: center;
+        }
+        .icono-giro { font-size: 60px; margin-bottom: 20px; animation: girarCelular 2s infinite ease-in-out; color: #ff6600; }
+        @keyframes girarCelular { 
+            0% { transform: rotate(-90deg); } 
+            50% { transform: rotate(0deg); } 
+            100% { transform: rotate(-90deg); } 
+        }
+
+        /* REGLA: Si la pantalla es apaisada (landscape) y es un dispositivo móvil (altura pequeña), mostramos el aviso */
+        @media screen and (orientation: landscape) and (max-height: 700px) {
+            #aviso-orientacion { display: flex !important; }
+            #app-juego { display: none !important; } /* Ocultamos el juego */
+            #aviso-pausa { display: none !important; }
+        }
+
         /* --- LAYOUT DIVIDIDO --- */
         #app-juego { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: row; background: #000; }
 
@@ -32,7 +53,7 @@
         /* MÓVIL (VERTICAL) */
         @media screen and (max-width: 768px) {
             #app-juego { flex-direction: column; }
-            .col-mapa { display: none; } /* Ocultamos el mapa lateral en móvil */
+            .col-mapa { display: none; } 
             .col-juego { border-right: none; width: 100%; }
         }
 
@@ -93,6 +114,13 @@
 </head>
 <body>
 
+    <div id="aviso-orientacion">
+        <div class="icono-giro">📱</div>
+        <h2 style="letter-spacing: 2px; margin-bottom: 10px;">GIRA TU TELÉFONO</h2>
+        <p style="color:#ccc; font-size:14px; max-width: 80%;">Esta misión requiere usar el escáner y ver evidencia en pantalla completa.</p>
+        <p style="color:#ff6600; font-weight:bold; font-size:12px; margin-top:10px;">(PONLO EN VERTICAL)</p>
+    </div>
+
     <div id="aviso-pausa">
         <h2 style="color:#ff6600; margin-bottom:10px;">SISTEMA EN PAUSA</h2>
         <p style="color:#ccc; font-size:12px; margin-bottom:20px;">Toca para reanudar la misión.</p>
@@ -133,7 +161,6 @@
                 <video id="vid3" class="video-evidencia" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-1.mp4" playsinline muted loop></video>
                 <video id="vid4" class="video-evidencia" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-4.mp4" playsinline muted loop></video>
                 <video id="vid5" class="video-evidencia" src="https://www.motmotexperiencias.com/wp-content/uploads/2025/12/PISTA4-6_compressed.mp4" playsinline muted loop></video>
-                
                 <button id="btn-next-vid" class="btn-motmot" onclick="siguienteVideo()">SIGUIENTE PRUEBA >></button>
             </div>
 
@@ -182,7 +209,9 @@
 <script>
     // --- CONFIGURACIÓN ---
     const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbyH058Ipqtju9KZcLGgzM8TFnjOCSaBGIbEHC-kmzjsft2yV77GbagpuiKecE_i1pkX/exec";
-    const DESTINO = { lat: 6.637370, lon: -73.227285 }; // Cementerio Barichara
+    
+    // UBICACIÓN CORREGIDA: Cementerio Barichara (Salida Cra 7)
+    const DESTINO = { lat: 6.633595, lon: -73.225215 }; 
 
     // --- IDIOMAS ---
     let idioma = localStorage.getItem('motmot_lang') || 'es';
@@ -222,9 +251,7 @@
     // --- CARGA ---
     window.onload = () => {
         aplicarIdioma();
-        initMapRef(); // Mapa derecho (PC)
-        
-        // Guardián
+        initMapRef(); 
         verificarPantalla();
         window.addEventListener("resize", verificarPantalla);
         document.addEventListener("visibilitychange", () => {
@@ -232,10 +259,13 @@
         });
     };
 
+    // Función modificada para manejar la orientación
     function verificarPantalla() {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const isFullScreen = document.fullscreenElement || document.webkitFullscreenElement;
-        // Solo pausar si es móvil, no es fullscreen y ya pasamos la intro
+        
+        // El CSS se encarga de mostrar #aviso-orientacion si está en landscape.
+        // Aquí solo manejamos la pausa por falta de fullscreen.
         if (isMobile && !isFullScreen && document.getElementById('step-intro').style.display === 'none') {
              document.getElementById('aviso-pausa').style.display = 'flex';
         }
@@ -266,21 +296,21 @@
 
     // --- MAPAS ---
     function initMapRef() {
-        // Mapa estático columna derecha
         mapRef = L.map('mapa-referencia', { zoomControl: false, attributionControl: false }).setView([DESTINO.lat, DESTINO.lon], 18);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapRef);
-        L.marker([DESTINO.lat, DESTINO.lon]).addTo(mapRef);
+        const icon = L.divIcon({ html: '<div style="background:#ff6600; width:15px; height:15px; border-radius:50%; border:2px solid white;"></div>', className: '' });
+        L.marker([DESTINO.lat, DESTINO.lon], {icon: icon}).addTo(mapRef)
+        .bindPopup("Cementerio de Barichara").openPopup();
     }
 
     function initMapGPS() {
-        // Mapa activo columna izquierda
         mapGPS = L.map('mapa-gps-activo', { zoomControl: false, attributionControl: false }).setView([DESTINO.lat, DESTINO.lon], 16);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapGPS);
         const icon = L.divIcon({ html: '<div style="background:#ff6600; width:15px; height:15px; border-radius:50%; border:2px solid white;"></div>', className: '' });
         L.marker([DESTINO.lat, DESTINO.lon], {icon: icon}).addTo(mapGPS);
     }
 
-    // --- FLUJO ---
+    // --- FLUJO DEL JUEGO ---
     function iniciarGPS() {
         reanudarJuego();
         document.getElementById('step-intro').style.display = 'none';
@@ -323,13 +353,11 @@
             next.classList.add('activo');
             next.play();
         } else {
-            // Fin videos -> Scanner
             document.getElementById('step-videos').style.display = 'none';
             document.getElementById('step-scanner').style.display = 'block';
         }
     }
 
-    // --- ESCÁNER ---
     function activarCamara() {
         document.getElementById('btn-cam').style.display = 'none';
         html5QrCode = new Html5Qrcode("reader");
@@ -348,7 +376,6 @@
         document.getElementById('step-quiz-1').style.display = 'block';
     }
 
-    // --- QUIZ ---
     function checkQ1(n) {
         if(n === 7) {
             document.getElementById('step-quiz-1').style.display = 'none';
